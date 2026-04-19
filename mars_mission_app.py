@@ -28,15 +28,24 @@ with st.sidebar:
     st.title("🛠️ 系統設定")
     st.session_state.eye_protection = st.toggle("🌙 護眼模式", value=st.session_state.eye_protection)
     st.divider()
-    if st.session_state.get('logged_in') and st.session_state.role == "Admin":
-        st.subheader("⏰ 報更截止設定")
-        deadline = db.get_system_settings()
-        days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        new_day = st.selectbox("截止星期", days, index=days.index(deadline["day"]))
-        new_time = st.time_input("截止時間", value=datetime.strptime(deadline["time"], "%H:%M").time())
-        if st.button("更新截止時間"):
-            db.update_system_settings({"day": new_day, "time": new_time.strftime("%H:%M")})
-            st.success("設定已更新")
+    
+    if st.session_state.get('logged_in'):
+        if st.session_state.role == "Admin":
+            st.subheader("⏰ 報更截止設定")
+            deadline = db.get_system_settings()
+            days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            new_day = st.selectbox("截止星期", days, index=days.index(deadline["day"]))
+            new_time = st.time_input("截止時間", value=datetime.strptime(deadline["time"], "%H:%M").time())
+            if st.button("更新截止時間"):
+                db.update_system_settings({"day": new_day, "time": new_time.strftime("%H:%M")})
+                st.success("設定已更新")
+            st.divider()
+        
+        if st.button("🚪 登出系統", use_container_width=True):
+            st.session_state.logged_in = False
+            st.session_state.username = None
+            st.session_state.role = None
+            st.rerun()
 
 # 自定義 CSS
 if st.session_state.eye_protection:
@@ -66,11 +75,32 @@ else:
 # ==========================================
 
 def is_before_deadline():
-    deadline = db.get_system_settings()
+    """
+    檢查當前時間是否在截止日期之前。
+    截止日期設定為每週的某天某時 (例如：每週六 15:00)。
+    """
+    deadline_cfg = db.get_system_settings()
     now = datetime.now()
-    # 這裡簡化邏輯：檢查當前時間是否超過本週的截止點
-    # 實際應用中可能需要更複雜的週次判斷
-    return True # 暫時回傳 True 供測試
+    
+    # 將星期字串轉換為數字 (Monday=0, ..., Sunday=6)
+    days_map = {
+        "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
+        "Friday": 4, "Saturday": 5, "Sunday": 6
+    }
+    target_day_num = days_map.get(deadline_cfg["day"], 5)
+    target_time = datetime.strptime(deadline_cfg["time"], "%H:%M").time()
+    
+    # 找到本週的截止時間點
+    # 先找到本週一的日期
+    monday = now.date() - timedelta(days=now.weekday())
+    # 找到本週目標星期的日期
+    this_week_deadline_date = monday + timedelta(days=target_day_num)
+    this_week_deadline = datetime.combine(this_week_deadline_date, target_time)
+    
+    # 如果現在已經過了本週的截止時間，則返回 False
+    if now > this_week_deadline:
+        return False
+    return True
 
 # ==========================================
 # --- 3. 登入頁面 ---
@@ -81,18 +111,27 @@ if 'logged_in' not in st.session_state:
 
 def login_page():
     st.title(f"📅 {CONFIG['SYSTEM_NAME']}")
+    st.subheader("請登入系統")
     with st.form("login_form"):
-        u = st.text_input("用戶名稱").strip().lower()
-        p = st.text_input("密碼", type="password").strip()
-        if st.form_submit_button("登入"):
-            user = db.verify_user(u, p)
-            if user:
-                st.session_state.logged_in = True
-                st.session_state.username = user["username"]
-                st.session_state.role = user["role"]
-                st.rerun()
-            else:
-                st.error("❌ 錯誤")
+        u = st.text_input("用戶名稱 (Username)").strip().lower()
+        p = st.text_input("密碼 (Password)", type="password").strip()
+        if st.form_submit_button("登入系統"):
+            if not u or not p:
+                st.warning("請輸入用戶名稱和密碼")
+                return
+            try:
+                user = db.verify_user(u, p)
+                if user:
+                    st.session_state.logged_in = True
+                    st.session_state.username = user["username"]
+                    st.session_state.role = user["role"]
+                    st.success("✅ 登入成功！")
+                    st.rerun()
+                else:
+                    st.error("❌ 用戶名稱或密碼錯誤")
+                    st.info("💡 提示：請確保已在資料庫插入測試帳號 (admin / admin123)")
+            except Exception as e:
+                st.error(f"⚠️ 系統錯誤: {str(e)}")
 
 # ==========================================
 # --- 4. 管理員視圖 ---
@@ -168,9 +207,7 @@ def admin_view():
                 st.download_button("📥 下載 Excel", output.getvalue(), "Report.xlsx")
 
     with tab3:
-        if st.button("🚪 登出"):
-            st.session_state.logged_in = False
-            st.rerun()
+        change_password_ui()
 
 # ==========================================
 # --- 5. PT 視圖 ---
@@ -185,16 +222,57 @@ def pt_view():
     
     with tab1:
         if is_before_deadline():
-            d = st.date_input("日期", min_value=date.today())
-            chosen = [s for s in CONFIG["SLOTS"] if st.checkbox(s)]
-            if st.button("提交"):
-                if chosen:
-                    db.submit_pt_shift(st.session_state.username, d.strftime("%Y-%m-%d"), chosen, "")
-                    st.success("成功")
+            st.subheader("選擇報更日期範圍 (可選擇單日或連續日期)")
+            date_range = st.date_input(
+                "選擇日期範圍",
+                value=(date.today(), date.today() + timedelta(days=1)),
+                min_value=date.today(),
+                help="點擊兩次以選擇開始和結束日期"
+            )
+            
+            # 處理日期範圍
+            if isinstance(date_range, tuple) and len(date_range) == 2:
+                start_date, end_date = date_range
+            else:
+                start_date = end_date = date_range if not isinstance(date_range, tuple) else date_range[0]
+
+            st.write(f"已選擇範圍: **{start_date}** 至 **{end_date}**")
+            
+            st.divider()
+            st.write("選擇時段 (套用於所選範圍內的所有日期):")
+            chosen = [s for s in CONFIG["SLOTS"] if st.checkbox(s, key=f"slot_{s}")]
+            remarks = st.text_area("備註 (選填)", placeholder="例如：這幾天都需要早走 15 分鐘")
+
+            if st.button("🚀 批量提交報更", type="primary"):
+                if not chosen:
+                    st.warning("⚠️ 請至少選擇一個時段")
                 else:
-                    st.warning("請選擇時段")
+                    # 計算日期列表
+                    delta = end_date - start_date
+                    dates_to_submit = [start_date + timedelta(days=i) for i in range(delta.days + 1)]
+                    
+                    success_count = 0
+                    duplicate_count = 0
+                    
+                    progress_bar = st.progress(0)
+                    for i, d in enumerate(dates_to_submit):
+                        d_str = d.strftime("%Y-%m-%d")
+                        if db.check_duplicate_shift(st.session_state.username, d_str):
+                            duplicate_count += 1
+                        else:
+                            db.submit_pt_shift(st.session_state.username, d_str, chosen, remarks)
+                            success_count += 1
+                        progress_bar.progress((i + 1) / len(dates_to_submit))
+                    
+                    if success_count > 0:
+                        st.success(f"✅ 成功提交 {success_count} 天的報更！")
+                    if duplicate_count > 0:
+                        st.warning(f"ℹ️ 有 {duplicate_count} 天因為已有紀錄而跳過。")
+                    
+                    if success_count > 0:
+                        st.balloons()
         else:
-            st.error("已超過本週報更截止時間")
+            st.error("❌ 已超過本週報更截止時間，無法提交。")
 
     with tab2:
         res = db.get_user_shifts(st.session_state.username)
