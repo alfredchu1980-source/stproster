@@ -12,7 +12,7 @@ if 'eye_protection' not in st.session_state:
     st.session_state.eye_protection = False
 
 CONFIG = {
-    "SYSTEM_NAME": "PT 報更系統",
+    "SYSTEM_NAME": "火星殖民計劃-Part 2",
     "VERSION": "2.3.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
