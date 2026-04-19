@@ -13,7 +13,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "PT 報更系統",
-    "VERSION": "2.2.0",
+    "VERSION": "2.3.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -23,10 +23,14 @@ CONFIG = {
 
 st.set_page_config(page_title=CONFIG["SYSTEM_NAME"], page_icon="📅", layout="wide")
 
+# --- Top Right: Eye Protection ---
+col_top1, col_top2 = st.columns([9, 1])
+with col_top2:
+    st.session_state.eye_protection = st.toggle("🌙 護眼", value=st.session_state.eye_protection)
+
 # 側邊欄設定
 with st.sidebar:
     st.title("🛠️ 系統設定")
-    st.session_state.eye_protection = st.toggle("🌙 護眼模式", value=st.session_state.eye_protection)
     st.divider()
     
     if st.session_state.get('logged_in'):
@@ -40,12 +44,6 @@ with st.sidebar:
                 db.update_system_settings({"day": new_day, "time": new_time.strftime("%H:%M")})
                 st.success("設定已更新")
             st.divider()
-        
-        if st.button("🚪 登出系統", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.username = None
-            st.session_state.role = None
-            st.rerun()
 
 # 自定義 CSS
 if st.session_state.eye_protection:
@@ -290,3 +288,14 @@ else:
         admin_view()
     else:
         pt_view()
+
+# --- Bottom Right: Logout ---
+if st.session_state.get('logged_in'):
+    st.divider()
+    col_btm1, col_btm2 = st.columns([9, 1])
+    with col_btm2:
+        if st.button("🚪 登出", use_container_width=True):
+            st.session_state.logged_in = False
+            st.session_state.username = None
+            st.session_state.role = None
+            st.rerun()

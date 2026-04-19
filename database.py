@@ -75,5 +75,21 @@ def get_system_settings():
     return {"day": "Saturday", "time": "15:00"} # 預設值
 
 def update_system_settings(new_settings):
-    """更新系統設定"""
-    return supabase.table("settings").upsert({"key": "deadline", "value": new_settings}).execute()
+    """更新系統設定，增加錯誤捕捉與回饋"""
+    try:
+        # 使用 upsert 必須確保 settings 表有主鍵 (key)
+        res = supabase.table("settings").upsert({
+            "key": "deadline", 
+            "value": new_settings
+        }, on_conflict="key").execute()
+        return res
+    except Exception as e:
+        # 如果 upsert 失敗，嘗試手動更新
+        try:
+            res = supabase.table("settings").update({"value": new_settings}).eq("key", "deadline").execute()
+            if not res.data:
+                res = supabase.table("settings").insert({"key": "deadline", "value": new_settings}).execute()
+            return res
+        except Exception as inner_e:
+            st.error(f"資料庫更新失敗: {str(inner_e)}")
+            raise e
