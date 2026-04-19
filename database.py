@@ -65,14 +65,17 @@ def accept_all_pending():
     return supabase.table("pt_shifts").update({"status": "Accepted"}).eq("status", "Pending").execute()
 
 def get_system_settings():
-    """獲取系統設定 (如截止日期)"""
+    """獲獲取系統設定 (如截止日期)"""
     try:
         res = supabase.table("settings").select("*").eq("key", "deadline").execute()
         if res.data:
-            return res.data[0]["value"]
+            val = res.data[0]["value"]
+            if "enabled" not in val:
+                val["enabled"] = True
+            return val
     except:
         pass
-    return {"day": "Saturday", "time": "15:00"} # 預設值
+    return {"day": "Saturday", "time": "15:00", "enabled": True} # 預設值
 
 def update_system_settings(new_settings):
     """更新系統設定，增加錯誤捕捉與回饋"""

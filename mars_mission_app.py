@@ -37,11 +37,20 @@ with st.sidebar:
         if st.session_state.role == "Admin":
             st.subheader("⏰ 報更截止設定")
             deadline = db.get_system_settings()
+            
+            # 截止功能開關
+            is_enabled = st.toggle("啟用截止功能", value=deadline.get("enabled", True))
+            
             days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
             new_day = st.selectbox("截止星期", days, index=days.index(deadline["day"]))
             new_time = st.time_input("截止時間", value=datetime.strptime(deadline["time"], "%H:%M").time())
-            if st.button("更新截止時間"):
-                db.update_system_settings({"day": new_day, "time": new_time.strftime("%H:%M")})
+            
+            if st.button("更新截止設定"):
+                db.update_system_settings({
+                    "day": new_day, 
+                    "time": new_time.strftime("%H:%M"),
+                    "enabled": is_enabled
+                })
                 st.success("設定已更新")
             st.divider()
 
@@ -72,12 +81,36 @@ else:
 # --- 2. 輔助函數 ---
 # ==========================================
 
+def change_password_ui():
+    st.subheader("🔐 修改個人密碼")
+    with st.expander("點擊展開修改表單"):
+        with st.form("pw_form"):
+            old_p = st.text_input("輸入舊密碼", type="password")
+            new_p = st.text_input("輸入新密碼", type="password")
+            confirm_p = st.text_input("確認新密碼", type="password")
+            if st.form_submit_button("確認修改"):
+                user = db.verify_user(st.session_state.username, old_p)
+                if not user:
+                    st.error("❌ 舊密碼錯誤")
+                elif new_p != confirm_p:
+                    st.error("❌ 兩次輸入不一致")
+                elif len(new_p) < 4:
+                    st.error("❌ 密碼太短")
+                else:
+                    db.update_password(st.session_state.username, new_p)
+                    st.success("✅ 密碼修改成功！")
+
 def is_before_deadline():
     """
     檢查當前時間是否在截止日期之前。
     截止日期設定為每週的某天某時 (例如：每週六 15:00)。
     """
     deadline_cfg = db.get_system_settings()
+    
+    # 如果截止功能被關閉，則永遠回傳 True
+    if not deadline_cfg.get("enabled", True):
+        return True
+        
     now = datetime.now()
     
     # 將星期字串轉換為數字 (Monday=0, ..., Sunday=6)
@@ -214,9 +247,13 @@ def admin_view():
 def pt_view():
     st.title(f"🚀 PT: {st.session_state.username}")
     deadline = db.get_system_settings()
-    st.info(f"📢 報更截止時間：每週 {deadline['day']} {deadline['time']}")
     
-    tab1, tab2 = st.tabs(["📅 提交報更", "📜 我的紀錄"])
+    if deadline.get("enabled", True):
+        st.info(f"📢 報更截止時間：每週 {deadline['day']} {deadline['time']}")
+    else:
+        st.success("🔓 目前報更功能開放中 (無截止時間限制)")
+    
+    tab1, tab2, tab3 = st.tabs(["📅 提交報更", "📜 我的紀錄", "⚙️ 個人設定"])
     
     with tab1:
         if is_before_deadline():
@@ -276,6 +313,9 @@ def pt_view():
         res = db.get_user_shifts(st.session_state.username)
         if res.data:
             st.dataframe(pd.DataFrame(res.data)[['shift_date', 'slots', 'status']])
+
+    with tab3:
+        change_password_ui()
 
 # ==========================================
 # --- 6. 入口 ---
