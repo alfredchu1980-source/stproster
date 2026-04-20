@@ -24,6 +24,11 @@ def update_password(username, new_password):
     """修改密碼"""
     return supabase.table("users").update({"password": new_password}).eq("username", username).execute()
 
+def get_all_users():
+    """獲取所有用戶清單以進行角色比對"""
+    res = supabase.table("users").select("username, role").execute()
+    return res.data if res.data else []
+
 # --- PT 報更邏輯 ---
 def check_duplicate_shift(username, shift_date):
     """檢查該日期是否已報更"""
@@ -44,18 +49,19 @@ def submit_pt_shift(username, shift_date, slots, remarks):
     return supabase.table("pt_shifts").insert(data).execute()
 
 def get_user_shifts(username):
-    """獲取個人報更紀錄"""
-    return supabase.table("pt_shifts").select("*").eq("username", username).order("shift_date", desc=True).execute()
+    """獲取個人報更紀錄 (使用 ilike 確保不區分大小寫)"""
+    return supabase.table("pt_shifts").select("*").ilike("username", username).order("shift_date", desc=True).execute()
 
 # --- Admin 管理邏輯 ---
 def get_all_shifts(days=None):
-    """獲取所有人的紀錄供 Alfred 導出"""
+    """獲取所有人的紀錄 (恢復簡單查詢，確保資料不消失)"""
     query = supabase.table("pt_shifts").select("*").order("shift_date", desc=True)
     if days:
         from datetime import timedelta
         start_date = date.today() - timedelta(days=days)
         query = query.gte("shift_date", start_date.strftime("%Y-%m-%d"))
     return query.execute()
+
 def update_shift_status(shift_id, new_status):
     """更新報更狀態 (Accepted / Rejected / Pending)"""
     return supabase.table("pt_shifts").update({"status": new_status}).eq("id", shift_id).execute()
@@ -65,7 +71,7 @@ def accept_all_pending():
     return supabase.table("pt_shifts").update({"status": "Accepted"}).eq("status", "Pending").execute()
 
 def get_system_settings():
-    """獲獲取系統設定 (如截止日期)"""
+    """獲取系統設定 (如截止日期)"""
     try:
         res = supabase.table("settings").select("*").eq("key", "deadline").execute()
         if res.data:
@@ -78,16 +84,14 @@ def get_system_settings():
     return {"day": "Saturday", "time": "15:00", "enabled": True} # 預設值
 
 def update_system_settings(new_settings):
-    """更新系統設定，增加錯誤捕捉與回饋"""
+    """更新系統設定"""
     try:
-        # 使用 upsert 必須確保 settings 表有主鍵 (key)
         res = supabase.table("settings").upsert({
             "key": "deadline", 
             "value": new_settings
         }, on_conflict="key").execute()
         return res
     except Exception as e:
-        # 如果 upsert 失敗，嘗試手動更新
         try:
             res = supabase.table("settings").update({"value": new_settings}).eq("key", "deadline").execute()
             if not res.data:
