@@ -390,16 +390,16 @@ def admin_view():
                         picker_names = []
                         packer_names = []
                         
-                        for _, row in day_slot_data.iterrows():
-                            username = row['username'].lower()
+                        for _, staff_row in day_slot_data.iterrows():
+                            username = staff_row['username'].lower()
                             role = user_role_map.get(username, 'PT')
                             if role == 'Picker':
-                                picker_names.append(row['username'])
+                                picker_names.append(staff_row['username'])
                             elif role == 'Packer':
-                                packer_names.append(row['username'])
+                                packer_names.append(staff_row['username'])
                             else:
                                 # Default: assign to picker if role not specified
-                                picker_names.append(row['username'])
+                                picker_names.append(staff_row['username'])
                         
                         picker_str = ", ".join(picker_names) if picker_names else "-"
                         packer_str = ", ".join(packer_names) if packer_names else "-"
@@ -468,15 +468,15 @@ def admin_view():
                                 picker_names = []
                                 packer_names = []
                                 
-                                for _, row in day_slot_data.iterrows():
-                                    username = row['username'].lower()
+                                for _, staff_row in day_slot_data.iterrows():
+                                    username = staff_row['username'].lower()
                                     role = user_role_map.get(username, 'PT')
                                     if role == 'Picker':
-                                        picker_names.append(row['username'])
+                                        picker_names.append(staff_row['username'])
                                     elif role == 'Packer':
-                                        packer_names.append(row['username'])
+                                        packer_names.append(staff_row['username'])
                                     else:
-                                        picker_names.append(row['username'])
+                                        picker_names.append(staff_row['username'])
                                 
                                 p_str = ",".join(picker_names[:2]) if picker_names else "-"
                                 k_str = ",".join(packer_names[:2]) if packer_names else "-"
@@ -580,14 +580,30 @@ def admin_view():
         
         with col_cal1:
             st.markdown('<div class="report-card"><h3>📅 週更表日曆 (Weekly Calendar)</h3>', unsafe_allow_html=True)
-            st.write("顯示當月首 7 天的日曆視圖，每日 3 時段 × Picker/Packer 分欄")
+            st.write("選擇要導出的週次，顯示該週 7 天的日曆視圖")
+            
+            # Week selector
+            year, month = map(int, sel_report_month.split('-'))
+            first_day = datetime(year, month, 1)
+            # Calculate number of weeks in month
+            import calendar
+            _, num_days = calendar.monthrange(year, month)
+            num_weeks = (first_day.weekday() + num_days + 6) // 7
+            week_options = [f"第 {i+1} 週" for i in range(num_weeks)]
+            
+            selected_week = st.selectbox("選擇週次", week_options, key="week_selector_cal")
+            week_num = int(selected_week.replace("第 ", "").replace(" 週", "")) - 1
+            
+            # Calculate date range for selected week
+            days_before_monday = first_day.weekday()  # 0=Monday
+            week_start = first_day - timedelta(days=days_before_monday) + timedelta(weeks=week_num)
+            week_end = week_start + timedelta(days=6)
+            
+            st.info(f"📅 日期範圍：{week_start.strftime('%Y-%m-%d')} 至 {week_end.strftime('%Y-%m-%d')}")
+            
             if st.button("生成週更表日曆", key="cal_weekly_btn"):
-                # Get first 7 days of selected month
-                year, month = map(int, sel_report_month.split('-'))
-                start_d = datetime(year, month, 1)
-                end_d = start_d + timedelta(days=6)
-                data = generate_calendar_excel("weekly", sel_report_month, start_d, end_d)
-                st.download_button(f"📥 下載週更表日曆", data, f"Calendar_Weekly_{sel_report_month}.xlsx", key="dl_cal_weekly")
+                data = generate_calendar_excel("weekly", sel_report_month, week_start, week_end)
+                st.download_button(f"📥 下載週更表日曆", data, f"Calendar_Weekly_W{week_num+1}_{sel_report_month}.xlsx", key="dl_cal_weekly")
             st.markdown('</div>', unsafe_allow_html=True)
         
         with col_cal2:
