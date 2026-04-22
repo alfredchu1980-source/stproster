@@ -499,6 +499,123 @@ def admin_view():
                 worksheet_monthly.write(legend_row, 2, "P = Picker (執單)", cell_format)
                 worksheet_monthly.write(legend_row, 3, "K = Packer (包裝)", cell_format)
                 worksheet_monthly.write(legend_row, 4, "早/中/晚 = 時段", cell_format)
+                
+                # ========== Staff Count Summary Sheet ==========
+                worksheet_summary = workbook.add_worksheet('Staff Count Summary')
+                
+                # Title
+                worksheet_summary.merge_range('A1:E1', f'人員統計摘要 (Staff Count Summary)', title_format)
+                worksheet_summary.write('A2', f"期間：{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')} | 生成：{datetime.now().strftime('%Y-%m-%d %H:%M')}", 
+                                       workbook.add_format({'italic': True, 'align': 'center'}))
+                
+                # Headers
+                summary_header_format = workbook.add_format({
+                    'bold': True, 'bg_color': '#d0d7de', 'border': 1,
+                    'align': 'center', 'valign': 'vcenter', 'font_size': 11
+                })
+                summary_cell_format = workbook.add_format({
+                    'border': 1, 'align': 'center', 'valign': 'vcenter', 'font_size': 11
+                })
+                total_row_format = workbook.add_format({
+                    'bold': True, 'bg_color': '#e8f4ff', 'border': 1,
+                    'align': 'center', 'valign': 'vcenter', 'font_size': 11
+                })
+                
+                # Write headers
+                worksheet_summary.write('A4', '日期', summary_header_format)
+                worksheet_summary.write('B4', '星期', summary_header_format)
+                worksheet_summary.write('C4', '時段', summary_header_format)
+                worksheet_summary.write('D4', 'Picker 人數', summary_header_format)
+                worksheet_summary.write('E4', 'Packer 人數', summary_header_format)
+                worksheet_summary.write('F4', '總人數', summary_header_format)
+                
+                # Calculate and write staff counts per day/slot
+                row_num = 5
+                for current_date in date_list:
+                    date_str = current_date.strftime('%Y-%m-%d')
+                    weekday = current_date.weekday()
+                    day_name = f"{day_names_zh[weekday]} ({day_names_en[weekday]})"
+                    
+                    for slot in time_slots:
+                        # Get accepted shifts for this date and slot
+                        day_slot_data = df_cal[(df_cal['shift_date'] == date_str) & 
+                                              (df_cal['slots'].apply(lambda x: slot in x if isinstance(x, list) else slot in str(x)))]
+                        
+                        picker_count = 0
+                        packer_count = 0
+                        
+                        for _, staff_row in day_slot_data.iterrows():
+                            username = staff_row['username'].lower()
+                            role = user_role_map.get(username, 'PT')
+                            if role == 'Picker':
+                                picker_count += 1
+                            elif role == 'Packer':
+                                packer_count += 1
+                            else:
+                                picker_count += 1  # Default to Picker
+                        
+                        total_count = picker_count + packer_count
+                        
+                        worksheet_summary.write(row_num, 0, date_str, summary_cell_format)
+                        worksheet_summary.write(row_num, 1, day_name, summary_cell_format)
+                        worksheet_summary.write(row_num, 2, f"{slot} ({time_slot_hours[slot]})", summary_cell_format)
+                        worksheet_summary.write(row_num, 3, picker_count, summary_cell_format)
+                        worksheet_summary.write(row_num, 4, packer_count, summary_cell_format)
+                        worksheet_summary.write(row_num, 5, total_count, summary_cell_format)
+                        row_num += 1
+                    
+                    # Add blank row after each day for readability
+                    worksheet_summary.write(row_num, 0, "", workbook.add_format({'border': 0}))
+                    row_num += 1
+                
+                # Add summary statistics at the bottom
+                row_num += 1
+                worksheet_summary.write(row_num, 0, "📊 統計摘要 (Summary Statistics)", total_row_format)
+                row_num += 1
+                
+                # Calculate totals per slot
+                worksheet_summary.write(row_num, 0, "時段總計 (Slot Totals)", summary_header_format)
+                worksheet_summary.write(row_num, 1, "", summary_header_format)
+                worksheet_summary.write(row_num, 2, "", summary_header_format)
+                worksheet_summary.write(row_num, 3, "Picker 總數", summary_header_format)
+                worksheet_summary.write(row_num, 4, "Packer 總數", summary_header_format)
+                worksheet_summary.write(row_num, 5, "總人次", summary_header_format)
+                row_num += 1
+                
+                for slot in time_slots:
+                    slot_rows = len([d for d in date_list])
+                    # Recalculate totals for this slot
+                    total_picker = 0
+                    total_packer = 0
+                    for current_date in date_list:
+                        date_str = current_date.strftime('%Y-%m-%d')
+                        day_slot_data = df_cal[(df_cal['shift_date'] == date_str) & 
+                                              (df_cal['slots'].apply(lambda x: slot in x if isinstance(x, list) else slot in str(x)))]
+                        for _, staff_row in day_slot_data.iterrows():
+                            username = staff_row['username'].lower()
+                            role = user_role_map.get(username, 'PT')
+                            if role == 'Picker':
+                                total_picker += 1
+                            elif role == 'Packer':
+                                total_packer += 1
+                            else:
+                                total_picker += 1
+                    
+                    worksheet_summary.write(row_num, 0, "", summary_cell_format)
+                    worksheet_summary.write(row_num, 1, "", summary_cell_format)
+                    worksheet_summary.write(row_num, 2, slot, summary_cell_format)
+                    worksheet_summary.write(row_num, 3, total_picker, summary_cell_format)
+                    worksheet_summary.write(row_num, 4, total_packer, summary_cell_format)
+                    worksheet_summary.write(row_num, 5, total_picker + total_packer, total_row_format)
+                    row_num += 1
+                
+                # Set column widths
+                worksheet_summary.set_column('A:A', 12)  # Date
+                worksheet_summary.set_column('B:B', 18)  # Day
+                worksheet_summary.set_column('C:C', 20)  # Slot
+                worksheet_summary.set_column('D:D', 12)  # Picker count
+                worksheet_summary.set_column('E:E', 12)  # Packer count
+                worksheet_summary.set_column('F:F', 10)  # Total
             
             return output.getvalue()
 
