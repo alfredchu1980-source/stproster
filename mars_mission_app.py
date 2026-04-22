@@ -586,7 +586,6 @@ def admin_view():
             year, month = map(int, sel_report_month.split('-'))
             first_day = datetime(year, month, 1)
             # Calculate number of weeks in month
-            import calendar
             _, num_days = calendar.monthrange(year, month)
             num_weeks = (first_day.weekday() + num_days + 6) // 7
             week_options = [f"第 {i+1} 週" for i in range(num_weeks)]
