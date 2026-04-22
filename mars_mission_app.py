@@ -13,12 +13,16 @@ st.session_state.eye_protection = True
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "2.8.1",
+    "VERSION": "3.0.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
         "晚班": "18:00 - 23:00"
-    }
+    },
+    "HOURS_PER_SLOT": 4,
+    "MAX_DAYS_PER_WEEK": 6,
+    "FATIGUE_THRESHOLD": 40,
+    "HOURLY_RATE": 60  # 平均時薪 $60
 }
 
 # 隱藏左側欄
@@ -29,22 +33,22 @@ col_top1, col_top2 = st.columns([7, 3])
 with col_top2:
     st.markdown(f'<p style="color: #539bf5; font-weight: bold; font-size: 18px; text-align: right; margin-top: 10px;">🛡️ 強制開啟護眼模式 | Ver: {CONFIG["VERSION"]}</p>', unsafe_allow_html=True)
 
-# 自定義 CSS (V2.8.1: 22px 字體, 護眼配色)
+# 自定義 CSS (V2.9.4: 22px 字體, 護眼配色, 極簡報表卡片)
 st.markdown("""
     <style>
     html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #1e252b; color: #c9d1d9; }
     .stButton>button { width: 100%; border-radius: 15px; height: 4.5em; font-weight: bold; font-size: 20px !important; background-color: #2d333b; color: #adbac7; border: 1px solid #444c56; transition: all 0.3s; }
     .stButton>button:hover { border-color: #539bf5; color: #539bf5; }
-    .report-card { padding: 20px; border-radius: 15px; background-color: #22272e; border: 1px solid #444c56; margin-bottom: 15px; color: #adbac7; }
+    .report-card { padding: 12px; border-radius: 15px; background-color: #22272e; border: 1px solid #444c56; margin-bottom: 15px; color: #adbac7; min-height: 100px; }
     h1 { font-size: 36px !important; color: #539bf5 !important; }
     h2 { font-size: 30px !important; color: #539bf5 !important; }
-    h3 { font-size: 26px !important; color: #539bf5 !important; }
+    h3 { font-size: 22px !important; color: #539bf5 !important; margin-bottom: 8px; }
     .slot-y { background-color: #3e3610; color: #f2cc60; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #634c18; }
     .slot-b { background-color: #14233a; color: #539bf5; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #213e5a; }
     .slot-g { background-color: #162a1e; color: #57ab5a; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #234d32; }
     [data-testid="collapsedControl"] { display: none; }
     .applicant-box { border: 1px solid #444c56; padding: 15px; border-radius: 10px; margin-bottom: 10px; background-color: #1c2128; }
-    .role-header { color: #539bf5; font-weight: bold; border-left: 5px solid #539bf5; padding-left: 10px; margin: 10px 0; font-size: 20px; }
+    .role-header { color: #539bf5; font-weight: bold; border-left: 5px solid #539bf5; padding-left: 10px; margin: 15px 0 10px 0; font-size: 22px; background-color: #262c33; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -92,10 +96,17 @@ def is_before_deadline():
 
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
+if 'login_attempts' not in st.session_state:
+    st.session_state.login_attempts = 0
 
 def login_page():
     st.title(f"📅 {CONFIG['SYSTEM_NAME']}")
     st.subheader(f"請登入系統 (Ver: {CONFIG['VERSION']})")
+    
+    if st.session_state.login_attempts >= 5:
+        st.error("❌ 登入失敗次數過多，帳號已暫時鎖定。請聯繫管理員。")
+        return
+
     with st.form("login_form"):
         u = st.text_input("用戶名稱 (Username)").strip().lower()
         p = st.text_input("密碼 (Password)", type="password").strip()
@@ -109,10 +120,12 @@ def login_page():
                     st.session_state.logged_in = True
                     st.session_state.username = user["username"]
                     st.session_state.role = user["role"]
+                    st.session_state.login_attempts = 0
                     st.success("✅ 登入成功！")
                     st.rerun()
                 else:
-                    st.error("❌ 用戶名稱或密碼錯誤")
+                    st.session_state.login_attempts += 1
+                    st.error(f"❌ 用戶名稱或密碼錯誤 (剩餘嘗試次數: {5 - st.session_state.login_attempts})")
             except Exception as e:
                 st.error(f"⚠️ 系統錯誤: {str(e)}")
 
@@ -151,15 +164,13 @@ def admin_view():
             st.rerun()
 
         if not raw_df.empty:
-            # 角色篩選
             available_roles = sorted(raw_df['role'].unique().tolist())
             col_f1, col_f2 = st.columns([4, 1])
             if col_f2.button("全選角色"):
-                st.session_state.role_sel_v4 = available_roles
+                st.session_state.role_sel_v8 = available_roles
                 st.rerun()
-            role_filter = col_f1.multiselect("篩選職能小組", available_roles, default=available_roles, key="role_sel_v4")
+            role_filter = col_f1.multiselect("篩選職能小組", available_roles, default=available_roles, key="role_sel_v8")
             
-            # 月份選擇
             available_months = sorted(raw_df['year_month'].unique().tolist(), reverse=True)
             current_ym = date.today().strftime('%Y-%m')
             selected_ym = st.selectbox("選擇顯示月份 (年-月)", available_months, index=available_months.index(current_ym) if current_ym in available_months else 0)
@@ -208,10 +219,9 @@ def admin_view():
                     st.markdown(f"### --- **{slot}** ---")
                     applicants = day_data[day_data['slots'].apply(lambda x: slot in x)]
                     if not applicants.empty:
-                        # 按 Role 分類排列 (V2.8.1 新增)
                         roles_in_slot = sorted(applicants['role'].unique().tolist())
                         for r_name in roles_in_slot:
-                            st.markdown(f'<div class="role-header">{r_name}</div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="role-header">小組: {r_name}</div>', unsafe_allow_html=True)
                             role_applicants = applicants[applicants['role'] == r_name]
                             for _, row in role_applicants.iterrows():
                                 with st.container():
@@ -226,78 +236,373 @@ def admin_view():
                                             st.rerun()
                     else:
                         st.write("無申請")
-            else:
-                st.write("該日期無符合篩選條件的申請")
 
     with tab2:
         st.subheader("📊 報表導出中心")
         
-        # 月份選擇 (用於報表)
         if not raw_df.empty:
             report_months = sorted(raw_df['year_month'].unique().tolist(), reverse=True)
         else:
             report_months = [date.today().strftime('%Y-%m')]
             
-        sel_report_month = st.selectbox("1. 選擇報表月份", report_months, key="report_month_sel")
+        sel_report_month = st.selectbox("1. 選擇報表月份", report_months, key="report_month_sel_v4")
         
-        col_rep1, col_rep2 = st.columns(2)
-        
-        def generate_excel_v2(df_to_export, report_type_name, month_str, range_name):
+        def generate_excel_v6(df_to_export, report_type_name, month_str, range_name, is_summary=False):
             output = io.BytesIO()
-            # 使用 xlsxwriter 確保格式與標題絕對可見
+            import xlsxwriter
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df_to_export.to_excel(writer, index=False, startrow=5, sheet_name='Sheet1')
+                df_to_export.to_excel(writer, index=False, startrow=6, sheet_name='Sheet1')
                 workbook  = writer.book
                 worksheet = writer.sheets['Sheet1']
                 
-                # 定義標題格式
-                title_fmt = workbook.add_format({'bold': True, 'font_size': 18, 'font_color': '#0969da'})
-                info_fmt = workbook.add_format({'font_size': 12})
+                title_fmt = workbook.add_format({'bold': True, 'font_size': 20, 'font_color': '#0969da', 'align': 'center'})
+                info_fmt = workbook.add_format({'font_size': 12, 'bold': True})
+                header_fmt = workbook.add_format({'bold': True, 'bg_color': '#f2f2f2', 'border': 1})
                 
-                # 強制寫入標題 (絕對位置)
-                worksheet.write('A1', f"火星殖民計劃 - {report_type_name}", title_fmt)
+                # 強制寫入標題
+                worksheet.merge_range('A1:G1', f"火星殖民計劃 - {report_type_name}", title_fmt)
                 worksheet.write('A2', f"報表範圍: {range_name}", info_fmt)
-                worksheet.write('A3', f"月份: {month_str}", info_fmt)
+                worksheet.write('A3', f"所屬月份: {month_str}", info_fmt)
                 worksheet.write('A4', f"生成日期: {datetime.now().strftime('%Y-%m-%d %H:%M')}", info_fmt)
+                worksheet.write('A5', f"平均時薪參考: ${CONFIG['HOURLY_RATE']}/hr", info_fmt)
                 
+                # 總計行 (如果是摘要報表)
+                if is_summary:
+                    last_row = len(df_to_export) + 6
+                    worksheet.write(last_row, 0, "總計 (Total)", header_fmt)
+                    col_idx = len(df_to_export.columns) - 1
+                    worksheet.write_formula(last_row, col_idx, f'=SUM({xlsxwriter.utility.xl_col_to_name(col_idx)}7:{xlsxwriter.utility.xl_col_to_name(col_idx)}{last_row})', header_fmt)
+
             return output.getvalue()
+
+        def generate_calendar_excel(report_type, month_str, start_date, end_date):
+            """生成日曆式更表 (Picker/Packer 分欄)"""
+            output = io.BytesIO()
+            import xlsxwriter
+            
+            # 過濾日期範圍內的數據
+            df_cal = raw_df[(raw_df['shift_date_dt'] >= start_date) & 
+                           (raw_df['shift_date_dt'] <= end_date) &
+                           (raw_df['status'] == 'Accepted')].copy()
+            
+            # 建立用戶角色映射 (Picker/Packer)
+            users_data = db.get_all_users()
+            user_role_map = {}
+            if users_data:
+                for u in users_data:
+                    role = u.get('role', 'PT').lower()
+                    if 'picker' in role:
+                        user_role_map[u['username'].lower()] = 'Picker'
+                    elif 'packer' in role:
+                        user_role_map[u['username'].lower()] = 'Packer'
+                    else:
+                        user_role_map[u['username'].lower()] = 'PT'
+            
+            # 時間槽
+            time_slots = ["早班", "中班", "晚班"]
+            time_slot_hours = {"早班": "09:00-14:00", "中班": "14:00-18:00", "晚班": "18:00-23:00"}
+            day_names_zh = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+            day_names_en = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            
+            # 生成日期列表
+            date_list = []
+            current = start_date
+            while current <= end_date:
+                date_list.append(current)
+                current += timedelta(days=1)
+            
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                workbook = writer.book
+                
+                # Formats
+                title_format = workbook.add_format({
+                    'bold': True, 'font_size': 18, 'font_color': '#0969da',
+                    'align': 'center', 'valign': 'vcenter', 'bg_color': '#f0f6fc'
+                })
+                
+                header_format = workbook.add_format({
+                    'bold': True, 'bg_color': '#d0d7de', 'border': 1,
+                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 11
+                })
+                
+                date_header_format = workbook.add_format({
+                    'bold': True, 'bg_color': '#e8f4ff', 'border': 1,
+                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 10
+                })
+                
+                cell_format = workbook.add_format({
+                    'border': 1, 'align': 'left', 'valign': 'top', 'text_wrap': True, 'font_size': 10
+                })
+                
+                weekend_format = workbook.add_format({
+                    'border': 1, 'align': 'left', 'valign': 'top', 'text_wrap': True,
+                    'font_size': 10, 'bg_color': '#fff4e6'
+                })
+                
+                slot_header_format = workbook.add_format({
+                    'bold': True, 'bg_color': '#cce5ff', 'border': 1,
+                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 10
+                })
+                
+                role_subheader_format = workbook.add_format({
+                    'bold': True, 'bg_color': '#e6f3ff', 'border': 1,
+                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 9
+                })
+                
+                empty_format = workbook.add_format({'border': 1, 'bg_color': '#f9f9f9'})
+                
+                # ========== Weekly Calendar Sheet ==========
+                worksheet_weekly = workbook.add_worksheet('Weekly Calendar')
+                
+                # Title
+                worksheet_weekly.merge_range('A1:H1', f'火星殖民計劃 - 週更表日曆 (Weekly Roster)', title_format)
+                worksheet_weekly.write('A2', f"週期：{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')} | 生成：{datetime.now().strftime('%Y-%m-%d %H:%M')}", 
+                                      workbook.add_format({'italic': True, 'align': 'center'}))
+                
+                # Write date headers (merge 2 columns per day)
+                for i, date in enumerate(date_list[:7]):  # Only first 7 days for weekly
+                    col_start = 1 + i * 2
+                    col_end = col_start + 1
+                    weekday = date.weekday()
+                    date_str = f"{date.strftime('%m/%d')}\n{day_names_zh[weekday]}\n{day_names_en[weekday]}"
+                    worksheet_weekly.merge_range(4, col_start, 4, col_end, date_str, date_header_format)
+                
+                # Write Picker/Packer sub-headers for each day
+                for i in range(min(7, len(date_list))):
+                    col_start = 1 + i * 2
+                    worksheet_weekly.write(5, col_start, "Picker", role_subheader_format)
+                    worksheet_weekly.write(5, col_start + 1, "Packer", role_subheader_format)
+                
+                # Write time slot labels in column A
+                for row_idx, slot in enumerate(time_slots):
+                    worksheet_weekly.write(6 + row_idx, 0, f"{slot}\n{time_slot_hours[slot]}", slot_header_format)
+                
+                # Fill in staff data
+                for row_idx, slot in enumerate(time_slots):
+                    for day_idx, date in enumerate(date_list[:7]):
+                        col_start = 1 + day_idx * 2
+                        date_str = date.strftime('%Y-%m-%d')
+                        
+                        # Get accepted shifts for this date and slot
+                        day_slot_data = df_cal[(df_cal['shift_date'] == date_str) & 
+                                              (df_cal['slots'].apply(lambda x: slot in x if isinstance(x, list) else slot in str(x)))]
+                        
+                        picker_names = []
+                        packer_names = []
+                        
+                        for _, row in day_slot_data.iterrows():
+                            username = row['username'].lower()
+                            role = user_role_map.get(username, 'PT')
+                            if role == 'Picker':
+                                picker_names.append(row['username'])
+                            elif role == 'Packer':
+                                packer_names.append(row['username'])
+                            else:
+                                # Default: assign to picker if role not specified
+                                picker_names.append(row['username'])
+                        
+                        picker_str = ", ".join(picker_names) if picker_names else "-"
+                        packer_str = ", ".join(packer_names) if packer_names else "-"
+                        
+                        fmt = weekend_format if day_idx >= 5 else cell_format
+                        worksheet_weekly.write(6 + row_idx, col_start, picker_str, fmt)
+                        worksheet_weekly.write(6 + row_idx, col_start + 1, packer_str, fmt)
+                
+                # Set column widths
+                worksheet_weekly.set_column(0, 0, 16)  # Time slot labels
+                for i in range(min(7, len(date_list))):
+                    worksheet_weekly.set_column(1 + i * 2, 1 + i * 2, 13)  # Picker columns
+                    worksheet_weekly.set_column(2 + i * 2, 2 + i * 2, 13)  # Packer columns
+                
+                # Set row heights
+                worksheet_weekly.set_row(4, 45)  # Date header
+                worksheet_weekly.set_row(5, 22)  # Picker/Packer sub-header
+                for row_idx in range(len(time_slots)):
+                    worksheet_weekly.set_row(6 + row_idx, 55)  # Data rows
+                
+                # ========== Monthly Calendar Sheet ==========
+                worksheet_monthly = workbook.add_worksheet('Monthly Calendar')
+                
+                # Title
+                worksheet_monthly.merge_range('A1:H1', f'火星殖民計劃 - 月更表日曆 (Monthly Roster)', title_format)
+                worksheet_monthly.write('A2', f"月份：{month_str} | 生成：{datetime.now().strftime('%Y-%m-%d %H:%M')}", 
+                                       workbook.add_format({'italic': True, 'align': 'center'}))
+                
+                # Header row: Day names
+                for i, day_name in enumerate(day_names_en):
+                    worksheet_monthly.write(4, i, f"{day_name}\n{day_names_zh[i]}", header_format)
+                
+                # Get first day of month calendar
+                first_day = date_list[0] if date_list else start_date
+                start_weekday = first_day.weekday()  # 0 = Monday
+                
+                # Calculate number of weeks needed
+                num_days = len(date_list)
+                num_weeks = (start_weekday + num_days + 6) // 7
+                
+                # Fill calendar grid
+                date_idx = 0
+                for week_num in range(num_weeks):
+                    for day_num in range(7):
+                        row = 5 + week_num
+                        col = day_num
+                        
+                        # Check if this is a valid date in the range
+                        if week_num == 0 and day_num < start_weekday:
+                            worksheet_monthly.write(row, col, "", empty_format)
+                        elif date_idx >= num_days:
+                            worksheet_monthly.write(row, col, "", empty_format)
+                        else:
+                            current_date = date_list[date_idx]
+                            date_idx += 1
+                            
+                            # Build cell content with all 3 time slots
+                            cell_content = f"📅 {current_date.strftime('%m/%d')}\n"
+                            cell_content += "─" * 18 + "\n"
+                            
+                            for slot in time_slots:
+                                date_str = current_date.strftime('%Y-%m-%d')
+                                day_slot_data = df_cal[(df_cal['shift_date'] == date_str) & 
+                                                      (df_cal['slots'].apply(lambda x: slot in x if isinstance(x, list) else slot in str(x)))]
+                                
+                                picker_names = []
+                                packer_names = []
+                                
+                                for _, row in day_slot_data.iterrows():
+                                    username = row['username'].lower()
+                                    role = user_role_map.get(username, 'PT')
+                                    if role == 'Picker':
+                                        picker_names.append(row['username'])
+                                    elif role == 'Packer':
+                                        packer_names.append(row['username'])
+                                    else:
+                                        picker_names.append(row['username'])
+                                
+                                p_str = ",".join(picker_names[:2]) if picker_names else "-"
+                                k_str = ",".join(packer_names[:2]) if packer_names else "-"
+                                cell_content += f"{slot[:1]}: P[{p_str}] | K[{k_str}]\n"
+                            
+                            fmt = weekend_format if day_num >= 5 else cell_format
+                            worksheet_monthly.write(row, col, cell_content, fmt)
+                
+                # Set column widths for monthly view
+                for col in range(7):
+                    worksheet_monthly.set_column(col, col, 20)
+                
+                # Set row heights
+                for row in range(5, 5 + num_weeks):
+                    worksheet_monthly.set_row(row, 110)
+                
+                # Add legend
+                legend_row = 5 + num_weeks + 1
+                worksheet_monthly.write(legend_row, 0, "圖例 Legend:", workbook.add_format({'bold': True}))
+                worksheet_monthly.write(legend_row, 2, "P = Picker (執單)", cell_format)
+                worksheet_monthly.write(legend_row, 3, "K = Packer (包裝)", cell_format)
+                worksheet_monthly.write(legend_row, 4, "早/中/晚 = 時段", cell_format)
+            
+            return output.getvalue()
+
+        col_rep1, col_rep2 = st.columns(2)
+        col_rep3, col_rep4 = st.columns(2)
 
         with col_rep1:
             st.markdown('<div class="report-card"><h3>📅 更表 (Roster)</h3>', unsafe_allow_html=True)
-            rep_type = st.radio("選擇範圍", ["週報表 (1-7日)", "雙週報表 (1-14日)", "月報表 (全月)"], key="roster_type")
+            rep_type = st.radio("範圍", ["週報表 (1-7日)", "雙週報表 (1-14日)", "月報表 (全月)"], key="roster_type")
             if st.button("生成更表"):
                 days = 7 if "週" in rep_type and "雙" not in rep_type else (14 if "雙週" in rep_type else 31)
                 df_rep = raw_df[raw_df['year_month'] == sel_report_month].copy()
-                df_rep['day'] = df_rep['shift_date_dt'].dt.day
-                df_rep = df_rep[df_rep['day'] <= days]
-                
+                df_rep = df_rep[df_rep['shift_date_dt'].dt.day <= days]
                 if not df_rep.empty:
                     df_rep['slots_str'] = df_rep['slots'].apply(lambda x: ", ".join(x))
                     final_df = df_rep[['username', 'role', 'shift_date', 'slots_str', 'status', 'remarks']]
                     final_df.columns = ['用戶名稱', '職能小組', '日期', '時段', '狀態', '備註']
-                    data = generate_excel_v2(final_df, "更表 (Roster)", sel_report_month, rep_type)
-                    st.download_button(f"📥 下載 {rep_type}更表", data, f"Roster_{rep_type}_{sel_report_month}.xlsx")
-                else:
-                    st.warning("此範圍無數據")
+                    data = generate_excel_v6(final_df, "更表 (Roster)", sel_report_month, rep_type)
+                    st.download_button(f"📥 下載更表", data, f"Roster_{rep_type}_{sel_report_month}.xlsx")
+                else: st.warning("無數據")
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col_rep2:
-            st.markdown('<div class="report-card"><h3>💰 工時 (Working Hours)</h3>', unsafe_allow_html=True)
-            work_type = st.radio("選擇範圍", ["週報表 (1-7日)", "雙週報表 (1-14日)", "月報表 (全月)"], key="work_type")
+            st.markdown('<div class="report-card"><h3>💰 工時統計 (Hours)</h3>', unsafe_allow_html=True)
+            work_type = st.radio("範圍", ["週報表 (1-7日)", "雙週報表 (1-14日)", "月報表 (全月)"], key="work_type")
             if st.button("生成工時報表"):
                 days = 7 if "週" in work_type and "雙" not in work_type else (14 if "雙週" in work_type else 31)
                 df_rep = raw_df[raw_df['year_month'] == sel_report_month].copy()
-                df_rep['day'] = df_rep['shift_date_dt'].dt.day
-                df_rep = df_rep[df_rep['day'] <= days]
-                
+                df_rep = df_rep[df_rep['shift_date_dt'].dt.day <= days]
                 if not df_rep.empty:
                     summary = df_rep.groupby(['username', 'role'])['total_hours'].sum().reset_index()
                     summary.columns = ['姓名', '職能角色', '總工時']
-                    summary['過勞預警'] = summary['總工時'].apply(lambda x: "⚠️ 建議休息" if x > 40 else "正常")
-                    data = generate_excel_v2(summary, "工時報表 (Working Hours)", sel_report_month, work_type)
-                    st.download_button(f"📥 下載 {work_type}工時報表", data, f"Hours_{work_type}_{sel_report_month}.xlsx")
+                    summary['過勞預警'] = summary['總工時'].apply(lambda x: "⚠️ 建議休息" if x > CONFIG["FATIGUE_THRESHOLD"] else "正常")
+                    data = generate_excel_v6(summary, "工時統計報表", sel_report_month, work_type)
+                    st.download_button(f"📥 下載工時報表", data, f"Hours_{work_type}_{sel_report_month}.xlsx")
+                else: st.warning("無數據")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with col_rep3:
+            st.markdown('<div class="report-card"><h3>💵 每日成本預估 (Daily Cost)</h3>', unsafe_allow_html=True)
+            cost_type = st.radio("範圍", ["週預估 (1-7日)", "雙週預估 (1-14日)", "月預估 (全月)"], key="cost_type")
+            if st.button("生成每日成本報表"):
+                days = 7 if "週" in cost_type and "雙" not in cost_type else (14 if "雙週" in cost_type else 31)
+                df_rep = raw_df[raw_df['year_month'] == sel_report_month].copy()
+                df_rep = df_rep[df_rep['shift_date_dt'].dt.day <= days]
+                if not df_rep.empty:
+                    daily_summary = df_rep.groupby('shift_date')['total_hours'].sum().reset_index()
+                    daily_summary['當日總支出'] = daily_summary['total_hours'] * CONFIG["HOURLY_RATE"]
+                    daily_summary.columns = ['日期', '當日總工時', f'當日總支出 (Rate:${CONFIG["HOURLY_RATE"]})']
+                    total_sum = daily_summary[f'當日總支出 (Rate:${CONFIG["HOURLY_RATE"]})'].sum()
+                    st.metric("範圍內總支出預估", f"${total_sum:,.0f}")
+                    data = generate_excel_v6(daily_summary, "每日成本預估 (Lump-sum by Date)", sel_report_month, cost_type, is_summary=True)
+                    st.download_button(f"📥 下載每日成本報表", data, f"Daily_Cost_{cost_type}_{sel_report_month}.xlsx")
+                else: st.warning("無數據")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with col_rep4:
+            st.markdown('<div class="report-card"><h3>👤 個人薪資預測 (Monthly Salary)</h3>', unsafe_allow_html=True)
+            st.write("統計全月每位人員的預計薪資支出。")
+            if st.button("生成全月薪資預測"):
+                df_rep = raw_df[raw_df['year_month'] == sel_report_month].copy()
+                if not df_rep.empty:
+                    person_summary = df_rep.groupby(['username', 'role'])['total_hours'].sum().reset_index()
+                    person_summary['預計月薪資'] = person_summary['total_hours'] * CONFIG["HOURLY_RATE"]
+                    person_summary.columns = ['姓名', '職能角色', '全月總工時', f'預計發放薪資 (Rate:${CONFIG["HOURLY_RATE"]})']
+                    total_payout = person_summary[f'預計發放薪資 (Rate:${CONFIG["HOURLY_RATE"]})'].sum()
+                    st.metric("全月預計總發放", f"${total_payout:,.0f}")
+                    data = generate_excel_v6(person_summary, "個人薪資預測 (Monthly Salary Prediction)", sel_report_month, "全月統計", is_summary=True)
+                    st.download_button(f"📥 下載全月薪資預測", data, f"Monthly_Salary_Prediction_{sel_report_month}.xlsx")
+                else: st.warning("無數據")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # === New Row: Calendar View Reports ===
+        st.divider()
+        st.subheader("📆 日曆式更表 (Calendar View)")
+        st.write("以日曆格式顯示，列為時段、欄為日期，並分列 Picker 與 Packer 人員")
+        
+        col_cal1, col_cal2 = st.columns(2)
+        
+        with col_cal1:
+            st.markdown('<div class="report-card"><h3>📅 週更表日曆 (Weekly Calendar)</h3>', unsafe_allow_html=True)
+            st.write("顯示當月首 7 天的日曆視圖，每日 3 時段 × Picker/Packer 分欄")
+            if st.button("生成週更表日曆", key="cal_weekly_btn"):
+                # Get first 7 days of selected month
+                year, month = map(int, sel_report_month.split('-'))
+                start_d = datetime(year, month, 1)
+                end_d = start_d + timedelta(days=6)
+                data = generate_calendar_excel("weekly", sel_report_month, start_d, end_d)
+                st.download_button(f"📥 下載週更表日曆", data, f"Calendar_Weekly_{sel_report_month}.xlsx", key="dl_cal_weekly")
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        with col_cal2:
+            st.markdown('<div class="report-card"><h3>📆 月更表日曆 (Monthly Calendar)</h3>', unsafe_allow_html=True)
+            st.write("顯示完整月份的日曆視圖，每日格子包含所有時段與人員")
+            if st.button("生成月更表日曆", key="cal_monthly_btn"):
+                # Get full month
+                year, month = map(int, sel_report_month.split('-'))
+                start_d = datetime(year, month, 1)
+                if month == 12:
+                    end_d = datetime(year + 1, 1, 1) - timedelta(days=1)
                 else:
-                    st.warning("此範圍無數據")
+                    end_d = datetime(year, month + 1, 1) - timedelta(days=1)
+                data = generate_calendar_excel("monthly", sel_report_month, start_d, end_d)
+                st.download_button(f"📥 下載月更表日曆", data, f"Calendar_Monthly_{sel_report_month}.xlsx", key="dl_cal_monthly")
             st.markdown('</div>', unsafe_allow_html=True)
 
     with tab3:
@@ -336,7 +641,7 @@ def pt_view():
                     start_date = end_date = date_range if not isinstance(date_range, tuple) else date_range[0]
                 dates_to_submit = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
             else:
-                st.subheader("按星期重複選擇 (最多選 6 天)")
+                st.subheader(f"按星期重複選擇 (最多選 {CONFIG['MAX_DAYS_PER_WEEK']} 天)")
                 days_map = {"週一": 0, "週二": 1, "週三": 2, "週四": 3, "週五": 4, "週六": 5, "週日": 6}
                 selected_weekdays = []
                 cols = st.columns(7)
@@ -344,11 +649,11 @@ def pt_view():
                     if cols[i].checkbox(name):
                         selected_weekdays.append(val)
                 
-                if len(selected_weekdays) > 6:
-                    st.error("為了您的健康，每週必須保留至少一日作為休息日。")
-                    selected_weekdays = selected_weekdays[:6]
+                if len(selected_weekdays) > CONFIG["MAX_DAYS_PER_WEEK"]:
+                    st.error(f"為了您的健康，每週必須保留至少一日作為休息日。")
+                    selected_weekdays = selected_weekdays[:CONFIG["MAX_DAYS_PER_WEEK"]]
                 
-                month_range = st.date_input("選擇重複範圍", value=(date.today(), date.today() + timedelta(days=30)), min_value=date.today())
+                month_range = st.date_input("選擇重複範圍 (開始與結束)", value=(date.today(), date.today() + timedelta(days=30)), min_value=date.today())
                 if isinstance(month_range, tuple) and len(month_range) == 2:
                     s_d, e_d = month_range
                     dates_to_submit = [s_d + timedelta(days=i) for i in range((e_d - s_d).days + 1) if (s_d + timedelta(days=i)).weekday() in selected_weekdays]
@@ -378,7 +683,7 @@ def pt_view():
                     for d in dates_to_submit:
                         d_str = d.strftime("%Y-%m-%d")
                         if not db.check_duplicate_shift(st.session_state.username, d_str):
-                            db.submit_pt_shift(st.session_state.username, d_str, chosen, remarks)
+                            db.submit_pt_shift(st.session_state.username, d_str, chosen, remarks, hours_per_slot=CONFIG["HOURS_PER_SLOT"])
                     st.success("✅ 多謝提供報更資料，請耐心等待主管批核。")
                     st.balloons()
         else:
@@ -410,6 +715,7 @@ if st.session_state.get('logged_in'):
             st.session_state.logged_in = False
             st.session_state.username = None
             st.session_state.role = None
+            st.session_state.login_attempts = 0
             st.rerun()
 
 st.markdown(f'<div style="text-align: center; color: #444c56; font-size: 14px; margin-top: 50px;">System Version: {CONFIG["VERSION"]} | Mars Mission Project</div>', unsafe_allow_html=True)
