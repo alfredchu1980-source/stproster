@@ -125,35 +125,50 @@ if st.session_state.get('eye_protection', True):
     .role-header { color: #539bf5; font-weight: bold; border-left: 5px solid #539bf5; padding-left: 10px; margin: 15px 0 10px 0; font-size: 22px; background-color: #262c33; }
     </style>
     '''
-else:
-    # 標準模式（淺色主題）
+
+# 自定義 CSS (V3.1.0: 22px 字體，護眼配色可切換，極簡報表卡片)
+# 根據護眼模式開關決定主題
+if st.session_state.get('eye_protection', True):
+    # 護眼模式（深色主題）
     theme_css = '''
     <style>
-    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #ffffff; color: #24292f; }
-    .stButton>button { width: 100%; border-radius: 15px; height: 4.5em; font-weight: bold; font-size: 20px !important; background-color: #f6f8fa; color: #24292f; border: 1px solid #d0d7de; transition: all 0.3s; }
-    .stButton>button:hover { border-color: #0969da; color: #0969da; }
-    .report-card { padding: 12px; border-radius: 15px; background-color: #f6f8fa; border: 1px solid #d0d7de; margin-bottom: 15px; color: #24292f; min-height: 100px; }
-    h1 { font-size: 36px !important; color: #0969da !important; }
-    h2 { font-size: 30px !important; color: #0969da !important; }
-    h3 { font-size: 22px !important; color: #0969da !important; margin-bottom: 8px; }
-    .slot-y { background-color: #fff8c5; color: #9a6700; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #d4a72c; }
-    .slot-b { background-color: #ddf4ff; color: #0969da; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #54aeff; }
-    .slot-g { background-color: #dafbe1; color: #055d20; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #4ac26b; }
+    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #1e252b; color: #c9d1d9; }
+    .stButton>button { width: 100%; border-radius: 15px; height: 4.5em; font-weight: bold; font-size: 20px !important; background-color: #2d333b; color: #adbac7; border: 1px solid #444c56; transition: all 0.3s; }
+    .stButton>button:hover { border-color: #539bf5; color: #539bf5; }
+    .report-card { padding: 12px; border-radius: 15px; background-color: #22272e; border: 1px solid #444c56; margin-bottom: 15px; color: #adbac7; min-height: 100px; }
+    h1 { font-size: 36px !important; color: #539bf5 !important; }
+    h2 { font-size: 30px !important; color: #539bf5 !important; }
+    h3 { font-size: 22px !important; color: #539bf5 !important; margin-bottom: 8px; }
+    .slot-y { background-color: #3e3610; color: #f2cc60; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #634c18; }
+    .slot-b { background-color: #14233a; color: #539bf5; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #213e5a; }
+    .slot-g { background-color: #162a1e; color: #57ab5a; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #234d32; }
     [data-testid="collapsedControl"] { display: none; }
-    .applicant-box { border: 1px solid #d0d7de; padding: 15px; border-radius: 10px; margin-bottom: 10px; background-color: #ffffff; }
-    .role-header { color: #0969da; font-weight: bold; border-left: 5px solid #0969da; padding-left: 10px; margin: 15px 0 10px 0; font-size: 22px; background-color: #f6f8fa; }
+    .applicant-box { border: 1px solid #444c56; padding: 15px; border-radius: 10px; margin-bottom: 10px; background-color: #1c2128; }
+    .role-header { color: #539bf5; font-weight: bold; border-left: 5px solid #539bf5; padding-left: 10px; margin: 15px 0 10px 0; font-size: 22px; background-color: #262c33; }
+    </style>
+    '''
+else:
+    # 標準模式（淺色護眼主題）- 米白色背景，柔和不刺眼
+    theme_css = '''
+    <style>
+    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #f5f5f0; color: #2d3748; }
+    .stButton>button { width: 100%; border-radius: 15px; height: 4.5em; font-weight: bold; font-size: 20px !important; background-color: #4a5568; color: #ffffff; border: 1px solid #4a5568; transition: all 0.3s; }
+    .stButton>button:hover { background-color: #2d3748; border-color: #2d3748; color: #ffffff; }
+    .report-card { padding: 12px; border-radius: 15px; background-color: #ffffff; border: 1px solid #e2e8f0; margin-bottom: 15px; color: #2d3748; min-height: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    h1 { font-size: 36px !important; color: #2c5282 !important; }
+    h2 { font-size: 30px !important; color: #2c5282 !important; }
+    h3 { font-size: 22px !important; color: #2c5282 !important; margin-bottom: 8px; }
+    .slot-y { background-color: #fefcbf; color: #975a16; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #d69e2e; }
+    .slot-b { background-color: #bee3f8; color: #2b6cb0; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #4299e1; }
+    .slot-g { background-color: #c6f6d5; color: #276749; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #48bb78; }
+    [data-testid="collapsedControl"] { display: none; }
+    .applicant-box { border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 10px; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .role-header { color: #2c5282; font-weight: bold; border-left: 5px solid #2c5282; padding-left: 10px; margin: 15px 0 10px 0; font-size: 22px; background-color: #ebf8ff; }
     </style>
     '''
 
 st.markdown(theme_css, unsafe_allow_html=True)
-
-# ==========================================
-# --- 2. 輔助函數 ---
-# ==========================================
-
-def change_password_ui():
-    st.subheader("🔐 修改個人密碼")
-    with st.expander("點擊展開修改表單"):
+with st.expander("點擊展開修改表單"):
         with st.form("pw_form"):
             old_p = st.text_input("輸入舊密碼", type="password")
             new_p = st.text_input("輸入新密碼", type="password")
