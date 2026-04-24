@@ -6,6 +6,37 @@ import io
 import calendar
 
 # ==========================================
+# --- 香港公眾假期資料 (2026 年) ---
+# ==========================================
+HONG_KONG_HOLIDAYS = {
+    # 2026 年香港公眾假期
+    "2026-01-01": "元旦",
+    "2026-02-17": "農曆年初一",
+    "2026-02-18": "農曆年初二",
+    "2026-02-19": "農曆年初三",
+    "2026-04-03": "清明節",
+    "2026-04-06": "復活節星期一",
+    "2026-05-01": "勞動節",
+    "2026-05-25": "佛誕",
+    "2026-06-19": "端午節",
+    "2026-07-01": "香港特別行政區成立紀念日",
+    "2026-09-16": "中秋節翌日",
+    "2026-10-01": "國慶日",
+    "2026-10-26": "重陽節",
+    "2026-12-25": "聖誕節",
+    "2026-12-26": "聖誕節後第一個周日",
+    "2026-12-28": "冬至翌日 (補假)",
+}
+
+def get_holiday_name(date_str):
+    """獲取指定日期的假期名稱"""
+    return HONG_KONG_HOLIDAYS.get(date_str, None)
+
+def is_holiday(date_str):
+    """檢查指定日期是否為香港公眾假期"""
+    return date_str in HONG_KONG_HOLIDAYS
+
+# ==========================================
 # --- 1. 系統配置 ---
 # ==========================================
 if 'eye_protection' not in st.session_state:
@@ -13,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.3.0",
+    "VERSION": "3.3.1",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -105,6 +136,18 @@ if eye_protection_mode:
     .slot-b { background-color: #14233a !important; color: #539bf5 !important; }
     .slot-g { background-color: #162a1e !important; color: #57ab5a !important; }
     
+    /* 假期標示 */
+    .holiday-badge { 
+        background-color: #d73a49 !important; 
+        color: #ffffff !important; 
+        padding: 2px 6px !important; 
+        border-radius: 3px !important; 
+        font-size: 12px !important; 
+        font-weight: bold !important;
+        display: inline-block !important;
+        margin-top: 4px !important;
+    }
+    
     /* 輸入框 */
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #c9d1d9 !important; background-color: #2d333b !important; border-color: #444c56 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #c9d1d9 !important; }
@@ -168,6 +211,18 @@ else:
     .slot-b { background-color: #dbeafe !important; color: #1e40af !important; }
     .slot-g { background-color: #d1fae5 !important; color: #047857 !important; }
     
+    /* 假期標示 */
+    .holiday-badge { 
+        background-color: #dc3545 !important; 
+        color: #ffffff !important; 
+        padding: 2px 6px !important; 
+        border-radius: 3px !important; 
+        font-size: 12px !important; 
+        font-weight: bold !important;
+        display: inline-block !important;
+        margin-top: 4px !important;
+    }
+    
     /* 輸入框 */
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #374151 !important; background-color: #ffffff !important; border-color: #d1d5db !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #374151 !important; }
@@ -202,7 +257,6 @@ else:
     """, unsafe_allow_html=True)
 
 # ==========================================
-# --- 2. 輔助函數 ---# ==========================================
 # --- 2. 輔助函數 ---
 # ==========================================
 
@@ -342,6 +396,7 @@ def admin_view():
             df_filtered = pd.DataFrame()
             sel_year, sel_month = date.today().year, date.today().month
 
+        # 顯示日曆
         cal = calendar.monthcalendar(sel_year, sel_month)
         cols_week = st.columns(7)
         for i, day_name in enumerate(["日", "一", "二", "三", "四", "五", "六"]):
@@ -356,6 +411,12 @@ def admin_view():
                     with cols[i]:
                         st.markdown(f"**{day}**")
                         date_str = f"{sel_year}-{sel_month:02d}-{day:02d}"
+                        
+                        # 顯示假期標示
+                        holiday_name = get_holiday_name(date_str)
+                        if holiday_name:
+                            st.markdown(f'<div class="holiday-badge">🎉 {holiday_name}</div>', unsafe_allow_html=True)
+                        
                         if not df_filtered.empty:
                             day_data = df_filtered[df_filtered['shift_date'] == date_str]
                             m_count = len(day_data[day_data['slots'].apply(lambda x: "早班" in x)])
@@ -473,6 +534,7 @@ def admin_view():
                 slot_header_format = workbook.add_format({'bold': True, 'bg_color': '#cce5ff', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 10})
                 role_subheader_format = workbook.add_format({'bold': True, 'bg_color': '#e6f3ff', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 9})
                 empty_format = workbook.add_format({'border': 1, 'bg_color': '#f9f9f9'})
+                holiday_format = workbook.add_format({'bold': True, 'bg_color': '#ffcccc', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'font_color': '#cc0000', 'font_size': 10})
                 
                 worksheet_weekly = workbook.add_worksheet('Weekly Calendar')
                 worksheet_weekly.merge_range('A1:H1', f'火星殖民計劃 - 週更表日曆 (Weekly Roster)', title_format)
@@ -482,8 +544,14 @@ def admin_view():
                     col_start = 1 + i * 2
                     col_end = col_start + 1
                     weekday = date.weekday()
-                    date_str = f"{date.strftime('%m/%d')}\\n{day_names_zh[weekday]}\\n{day_names_en[weekday]}"
-                    worksheet_weekly.merge_range(4, col_start, 4, col_end, date_str, date_header_format)
+                    date_str = date.strftime('%m/%d')
+                    holiday_name = get_holiday_name(date.strftime('%Y-%m-%d'))
+                    if holiday_name:
+                        date_str += f"\\n{holiday_name}"
+                        worksheet_weekly.merge_range(4, col_start, 4, col_end, date_str, holiday_format)
+                    else:
+                        date_str += f"\\n{day_names_zh[weekday]}\\n{day_names_en[weekday]}"
+                        worksheet_weekly.merge_range(4, col_start, 4, col_end, date_str, date_header_format)
                 
                 for i in range(min(7, len(date_list))):
                     col_start = 1 + i * 2
@@ -558,6 +626,12 @@ def admin_view():
                             date_idx += 1
                             
                             cell_content = f"📅 {current_date.strftime('%m/%d')}\\n"
+                            
+                            # 添加假期標示
+                            holiday_name = get_holiday_name(current_date.strftime('%Y-%m-%d'))
+                            if holiday_name:
+                                cell_content += f"🎉 {holiday_name}\\n"
+                            
                             cell_content += "─" * 18 + "\\n"
                             
                             for slot in time_slots:
@@ -596,6 +670,7 @@ def admin_view():
                 worksheet_monthly.write(legend_row, 2, "P = Picker (執單)", cell_format)
                 worksheet_monthly.write(legend_row, 3, "K = Packer (包裝)", cell_format)
                 worksheet_monthly.write(legend_row, 4, "早/中/晚 = 時段", cell_format)
+                worksheet_monthly.write(legend_row, 5, "🎉 = 公眾假期", cell_format)
                 
                 worksheet_summary = workbook.add_worksheet('Staff Count Summary')
                 worksheet_summary.merge_range('A1:E1', f'人員統計摘要 (Staff Count Summary)', title_format)
@@ -617,6 +692,11 @@ def admin_view():
                     date_str = current_date.strftime('%Y-%m-%d')
                     weekday = current_date.weekday()
                     day_name = f"{day_names_zh[weekday]} ({day_names_en[weekday]})"
+                    
+                    # 檢查是否為假期
+                    holiday_name = get_holiday_name(date_str)
+                    if holiday_name:
+                        day_name += f" [{holiday_name}]"
                     
                     for slot in time_slots:
                         day_slot_data = df_cal[(df_cal['shift_date'] == date_str) & 
@@ -900,6 +980,23 @@ def pt_view():
                 else:
                     dates_to_submit = []
 
+            # 顯示假期提示
+            st.divider()
+            st.subheader("🎉 假期提示")
+            holiday_dates = []
+            for d in dates_to_submit:
+                date_str = d.strftime("%Y-%m-%d")
+                holiday_name = get_holiday_name(date_str)
+                if holiday_name:
+                    holiday_dates.append(f"{date_str} ({holiday_name})")
+            
+            if holiday_dates:
+                st.success("✅ 您選擇的日期包含以下公眾假期：")
+                for hd in holiday_dates:
+                    st.markdown(f"- 🎉 **{hd}**")
+            else:
+                st.info("ℹ️ 您選擇的日期中沒有公眾假期")
+
             st.divider()
             st.write("選擇時段:")
             chosen = [s for s in CONFIG["SLOTS"] if st.checkbox(s, key=f"slot_{s}")]
@@ -981,6 +1078,12 @@ def pt_view():
                 with st.container():
                     col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
                     col1.markdown(f"**📅 {row['shift_date']}**")
+                    
+                    # 顯示假期標示
+                    holiday_name = get_holiday_name(row['shift_date'])
+                    if holiday_name:
+                        col1.markdown(f'<div class="holiday-badge">🎉 {holiday_name}</div>', unsafe_allow_html=True)
+                    
                     col2.markdown(f"⏰ {row['slots_str']}")
                     
                     status_emoji = {"Pending": "⏳", "Accepted": "✅", "Cancelled": "❌", "Rejected": "🚫"}.get(row['status'], "•")
