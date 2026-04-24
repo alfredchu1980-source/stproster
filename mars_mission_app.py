@@ -8,13 +8,12 @@ import calendar
 # ==========================================
 # --- 1. 系統配置 ---
 # ==========================================
-# 護眼模式 - 自由選擇（預設開啟）
 if 'eye_protection' not in st.session_state:
     st.session_state.eye_protection = True
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.2.0",
+    "VERSION": "3.3.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -36,18 +35,17 @@ st.set_page_config(
 )
 
 # 安全設定：隱藏 Streamlit 預設 UI 元素
-hide_ui_css = """
+st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    .stAppDeployButton {visibility: hidden;}
-    header {visibility: hidden;}
-    .viewerBadge {visibility: hidden;}
-    [data-testid="stToolbar"] {visibility: hidden;}
-    .stAppFooter {visibility: hidden;}
-    footer {visibility: hidden;}
+    #MainMenu {visibility: hidden !important;}
+    .stAppDeployButton {visibility: hidden !important;}
+    header {visibility: hidden !important;}
+    .viewerBadge {visibility: hidden !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important;}
+    .stAppFooter {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
     </style>
-"""
-st.markdown(hide_ui_css, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 # PWA Meta Tags
 st.markdown("""
@@ -71,73 +69,205 @@ with col_top1:
 with col_top2:
     st.markdown(f'<p style="color: #539bf5; font-weight: bold; font-size: 18px; text-align: right; margin-top: 10px;">Ver: {CONFIG["VERSION"]}</p>', unsafe_allow_html=True)
 
-# --- Apply Theme Colors Based on Eye Protection Mode ---
+# ==========================================
+# --- 完整主題顏色設定 ---
+# ==========================================
 eye_protection_mode = st.session_state.get('eye_protection', True)
 
 if eye_protection_mode:
-    # 護眼模式（深色主題）
+    # ============ 護眼模式（深色主題）============
     st.markdown("""
     <style>
+    /* 全局背景與文字 */
     html, body, [data-testid="stAppViewContainer"] { 
         font-size: 22px !important; 
         background-color: #1e252b !important; 
         color: #c9d1d9 !important; 
     }
-    .stButton>button { 
-        background-color: #2d333b !important; 
-        color: #adbac7 !important; 
-        border: 1px solid #444c56 !important; 
-    }
-    .stButton>button:hover { 
-        border-color: #539bf5 !important; 
+    
+    /* 所有文字元素 */
+    h1, h2, h3, h4, h5, h6 { 
         color: #539bf5 !important; 
     }
+    p, span, div, label { 
+        color: #c9d1d9 !important; 
+    }
+    [data-testid="stMarkdownContainer"] { 
+        color: #c9d1d9 !important; 
+    }
+    [data-testid="stMarkdownContainer"] p { 
+        color: #c9d1d9 !important; 
+    }
+    
+    /* 按鈕樣式 */
+    .stButton>button { 
+        background-color: #30363d !important; 
+        color: #79c0ff !important; 
+        border: 1px solid #444c56 !important; 
+        font-weight: bold !important;
+    }
+    .stButton>button:hover { 
+        background-color: #444c56 !important; 
+        color: #539bf5 !important; 
+        border-color: #539bf5 !important; 
+    }
+    
+    /* 卡片與容器 */
     .report-card { 
         background-color: #22272e !important; 
         border: 1px solid #444c56 !important; 
         color: #adbac7 !important; 
     }
-    h1, h2, h3 { color: #539bf5 !important; }
-    .slot-y { background-color: #3e3610 !important; color: #f2cc60 !important; }
-    .slot-b { background-color: #14233a !important; color: #539bf5 !important; }
-    .slot-g { background-color: #162a1e !important; color: #57ab5a !important; }
-    .applicant-box { background-color: #1c2128 !important; color: #adbac7 !important; }
-    .role-header { color: #539bf5 !important; background-color: #262c33 !important; }
-    [data-testid="stMarkdownContainer"] { color: #c9d1d9 !important; }
-    [data-testid="stTextInput"] input { color: #c9d1d9 !important; background-color: #2d333b !important; }
+    .applicant-box { 
+        background-color: #1c2128 !important; 
+        border: 1px solid #444c56 !important; 
+        color: #adbac7 !important; 
+    }
+    .role-header { 
+        color: #539bf5 !important; 
+        background-color: #262c33 !important; 
+        border-left: 5px solid #539bf5 !important; 
+    }
+    
+    /* 時段標籤 */
+    .slot-y { 
+        background-color: #3e3610 !important; 
+        color: #f2cc60 !important; 
+        border: 1px solid #634c18 !important; 
+    }
+    .slot-b { 
+        background-color: #14233a !important; 
+        color: #539bf5 !important; 
+        border: 1px solid #213e5a !important; 
+    }
+    .slot-g { 
+        background-color: #162a1e !important; 
+        color: #57ab5a !important; 
+        border: 1px solid #234d32 !important; 
+    }
+    
+    /* 輸入框 */
+    [data-testid="stTextInput"] input, 
+    [data-testid="stTextArea"] textarea { 
+        color: #c9d1d9 !important; 
+        background-color: #2d333b !important; 
+        border-color: #444c56 !important; 
+    }
+    [data-testid="stTextInput"] label,
+    [data-testid="stTextArea"] label {
+        color: #c9d1d9 !important;
+    }
+    
+    /* 選擇器 */
+    [data-testid="stSelectbox"] label {
+        color: #c9d1d9 !important;
+    }
+    
+    /* 警告與訊息 */
+    .stAlert { 
+        background-color: #262c33 !important; 
+        color: #c9d1d9 !important; 
+        border: 1px solid #444c56 !important; 
+    }
     </style>
     """, unsafe_allow_html=True)
 else:
-    # 標準模式（淺色護眼主題）- 米白色背景
+    # ============ 標準模式（淺色柔和主題）============
     st.markdown("""
     <style>
+    /* 全局背景與文字 */
     html, body, [data-testid="stAppViewContainer"] { 
         font-size: 22px !important; 
-        background-color: #f5f5f0 !important; 
-        color: #2d3748 !important; 
+        background-color: #f0f4f8 !important; 
+        color: #374151 !important; 
     }
+    
+    /* 所有文字元素 */
+    h1, h2, h3, h4, h5, h6 { 
+        color: #2563eb !important; 
+    }
+    p, span, div, label { 
+        color: #374151 !important; 
+    }
+    [data-testid="stMarkdownContainer"] { 
+        color: #374151 !important; 
+    }
+    [data-testid="stMarkdownContainer"] p { 
+        color: #374151 !important; 
+    }
+    
+    /* 按鈕樣式 - 柔和藍色 */
     .stButton>button { 
-        background-color: #4a5568 !important; 
+        background-color: #60a5fa !important; 
         color: #ffffff !important; 
-        border: 1px solid #4a5568 !important; 
+        border: 1px solid #60a5fa !important; 
+        font-weight: bold !important;
     }
     .stButton>button:hover { 
-        background-color: #2d3748 !important; 
+        background-color: #3b82f6 !important; 
         color: #ffffff !important; 
+        border-color: #2563eb !important; 
     }
+    
+    /* 卡片與容器 */
     .report-card { 
         background-color: #ffffff !important; 
-        border: 1px solid #e2e8f0 !important; 
-        color: #2d3748 !important; 
+        border: 1px solid #e5e7eb !important; 
+        color: #374151 !important; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
-    h1, h2, h3 { color: #2c5282 !important; }
-    .slot-y { background-color: #fefcbf !important; color: #975a16 !important; }
-    .slot-b { background-color: #bee3f8 !important; color: #2b6cb0 !important; }
-    .slot-g { background-color: #c6f6d5 !important; color: #276749 !important; }
-    .applicant-box { background-color: #ffffff !important; color: #2d3748 !important; }
-    .role-header { color: #2c5282 !important; background-color: #ebf8ff !important; }
-    [data-testid="stMarkdownContainer"] { color: #2d3748 !important; }
-    [data-testid="stTextInput"] input { color: #2d3748 !important; background-color: #ffffff !important; }
+    .applicant-box { 
+        background-color: #ffffff !important; 
+        border: 1px solid #e5e7eb !important; 
+        color: #374151 !important; 
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    }
+    .role-header { 
+        color: #2563eb !important; 
+        background-color: #eff6ff !important; 
+        border-left: 5px solid #2563eb !important; 
+    }
+    
+    /* 時段標籤 - 柔和配色 */
+    .slot-y { 
+        background-color: #fef3c7 !important; 
+        color: #92400e !important; 
+        border: 1px solid #f59e0b !important; 
+    }
+    .slot-b { 
+        background-color: #dbeafe !important; 
+        color: #1e40af !important; 
+        border: 1px solid #3b82f6 !important; 
+    }
+    .slot-g { 
+        background-color: #d1fae5 !important; 
+        color: #047857 !important; 
+        border: 1px solid #10b981 !important; 
+    }
+    
+    /* 輸入框 */
+    [data-testid="stTextInput"] input, 
+    [data-testid="stTextArea"] textarea { 
+        color: #374151 !important; 
+        background-color: #ffffff !important; 
+        border-color: #d1d5db !important; 
+    }
+    [data-testid="stTextInput"] label,
+    [data-testid="stTextArea"] label {
+        color: #374151 !important;
+    }
+    
+    /* 選擇器 */
+    [data-testid="stSelectbox"] label {
+        color: #374151 !important;
+    }
+    
+    /* 警告與訊息 */
+    .stAlert { 
+        background-color: #f9fafb !important; 
+        color: #374151 !important; 
+        border: 1px solid #e5e7eb !important; 
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -246,7 +376,6 @@ def admin_view():
         raw_df = pd.DataFrame()
 
     with tab1:
-        # 新增：已核准班表查看
         show_accepted_only = st.toggle("📱 顯示已核准班表 (Mobile View)", value=False, key="show_accepted_toggle")
         
         col_h, col_btn = st.columns([3, 1])
@@ -282,7 +411,6 @@ def admin_view():
             df_filtered = pd.DataFrame()
             sel_year, sel_month = date.today().year, date.today().month
 
-        # 繪製日曆
         cal = calendar.monthcalendar(sel_year, sel_month)
         cols_week = st.columns(7)
         for i, day_name in enumerate(["日", "一", "二", "三", "四", "五", "六"]):
@@ -716,7 +844,6 @@ def admin_view():
             
             year, month = map(int, sel_report_month.split('-'))
             first_day = datetime(year, month, 1)
-            import calendar
             _, num_days = calendar.monthrange(year, month)
             num_weeks = (first_day.weekday() + num_days + 6) // 7
             week_options = [f"第 {i+1} 週" for i in range(num_weeks)]
@@ -762,12 +889,10 @@ def admin_view():
                     st.error("❌ 請填寫用戶名稱和密碼")
                 else:
                     try:
-                        # 檢查用戶是否已存在
                         existing = db.get_all_users()
                         if any(u['username'].lower() == new_username for u in existing):
                             st.error("❌ 用戶名稱已存在")
                         else:
-                            # 新增用戶
                             import bcrypt
                             hashed_pw = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
                             db.supabase.table("users").insert({
@@ -889,7 +1014,6 @@ def pt_view():
             
             st.write(f"共 {len(df_pt)} 筆紀錄")
             
-            # 行事曆同步按鈕
             st.divider()
             st.subheader("📱 同步至手機行事曆")
             st.write("將已核准的班表同步到您的手機行事曆（Google Calendar、Apple Calendar 等）")
@@ -931,7 +1055,6 @@ def pt_view():
                     status_emoji = {"Pending": "⏳", "Accepted": "✅", "Cancelled": "❌", "Rejected": "🚫"}.get(row['status'], "•")
                     col3.markdown(f"{status_emoji} {row['status']}")
                     
-                    # 取消報更按鈕 (僅限 Pending 和 Accepted)
                     if row['status'] in ["Pending", "Accepted"]:
                         if col4.button("❌ 取消報更", key=f"cancel_{row['id']}"):
                             if row['status'] == "Pending":
