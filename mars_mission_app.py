@@ -142,7 +142,7 @@ if eye_protection_mode:
         color: #ffffff !important; 
         padding: 2px 6px !important; 
         border-radius: 3px !important; 
-        font-size: 12px !important; 
+        font-size: 16px !important; 
         font-weight: bold !important;
         display: inline-block !important;
         margin-top: 4px !important;
@@ -217,7 +217,7 @@ else:
         color: #ffffff !important; 
         padding: 2px 6px !important; 
         border-radius: 3px !important; 
-        font-size: 12px !important; 
+        font-size: 16px !important; 
         font-weight: bold !important;
         display: inline-block !important;
         margin-top: 4px !important;
