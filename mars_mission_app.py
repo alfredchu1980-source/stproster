@@ -14,7 +14,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.1.0",
+    "VERSION": "3.2.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -23,7 +23,7 @@ CONFIG = {
     "HOURS_PER_SLOT": 4,
     "MAX_DAYS_PER_WEEK": 6,
     "FATIGUE_THRESHOLD": 40,
-    "HOURLY_RATE": 60  # 平均時薪 $60
+    "HOURLY_RATE": 60
 }
 
 # 隱藏左側欄
@@ -32,30 +32,24 @@ st.set_page_config(
     page_icon="📅", 
     layout="wide", 
     initial_sidebar_state="collapsed",
-    menu_items={
-        'Get Help': None,
-        'Report a bug': None,
-        'About': None
-    }
+    menu_items=None
 )
 
-# 安全設定：隱藏 Streamlit 預設 UI 元素（GitHub、Deploy 等按鈕）
-# 只有管理員可以看到這些按鈕
+# 安全設定：隱藏 Streamlit 預設 UI 元素
 hide_ui_css = """
     <style>
-    /* 隱藏右上角選單按鈕（GitHub、Deploy 等）*/
     #MainMenu {visibility: hidden;}
     .stAppDeployButton {visibility: hidden;}
     header {visibility: hidden;}
-    
+    .viewerBadge {visibility: hidden;}
     [data-testid="stToolbar"] {visibility: hidden;}
-    
-    /* 隱藏底部 Streamlit logo */
+    .stAppFooter {visibility: hidden;}
+    footer {visibility: hidden;}
     </style>
 """
 st.markdown(hide_ui_css, unsafe_allow_html=True)
 
-# PWA Meta Tags for Mobile Home Screen
+# PWA Meta Tags
 st.markdown("""
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -66,113 +60,95 @@ st.markdown("""
     <link rel="manifest" href="/manifest.json">
     """, unsafe_allow_html=True)
 
-# --- Top Right: Status & Eye Protection Toggle ---
+# --- Top: Eye Protection Toggle (visible before and after login) ---
 col_top1, col_top2 = st.columns([6, 4])
 with col_top1:
-    # 護眼模式開關（只有登入後顯示）
-    if st.session_state.get('logged_in'):
-        eye_mode = st.toggle("🌙 護眼模式", value=st.session_state.eye_protection, key="eye_toggle")
-        if eye_mode != st.session_state.eye_protection:
-            st.session_state.eye_protection = eye_mode
-            st.rerun()
+    eye_mode = st.toggle("🌙 護眼模式", value=st.session_state.get('eye_protection', True), key="eye_toggle")
+    if eye_mode != st.session_state.get('eye_protection', True):
+        st.session_state.eye_protection = eye_mode
+        st.rerun()
 
 with col_top2:
-    # 只顯示版本號，不顯示護眼模式狀態
     st.markdown(f'<p style="color: #539bf5; font-weight: bold; font-size: 18px; text-align: right; margin-top: 10px;">Ver: {CONFIG["VERSION"]}</p>', unsafe_allow_html=True)
 
-# 自定義 CSS (V2.9.4: 22px 字體, 護眼配色, 極簡報表卡片)
-st.markdown("""
+# --- Apply Theme Colors Based on Eye Protection Mode ---
+eye_protection_mode = st.session_state.get('eye_protection', True)
+
+if eye_protection_mode:
+    # 護眼模式（深色主題）
+    st.markdown("""
     <style>
-    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #1e252b; color: #c9d1d9; }
-    .stButton>button { width: 100%; border-radius: 15px; height: 4.5em; font-weight: bold; font-size: 20px !important; background-color: #2d333b; color: #adbac7; border: 1px solid #444c56; transition: all 0.3s; }
-    .stButton>button:hover { border-color: #539bf5; color: #539bf5; }
-    .report-card { padding: 12px; border-radius: 15px; background-color: #22272e; border: 1px solid #444c56; margin-bottom: 15px; color: #adbac7; min-height: 100px; }
-    h1 { font-size: 36px !important; color: #539bf5 !important; }
-    h2 { font-size: 30px !important; color: #539bf5 !important; }
-    h3 { font-size: 22px !important; color: #539bf5 !important; margin-bottom: 8px; }
-    .slot-y { background-color: #3e3610; color: #f2cc60; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #634c18; }
-    .slot-b { background-color: #14233a; color: #539bf5; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #213e5a; }
-    .slot-g { background-color: #162a1e; color: #57ab5a; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #234d32; }
-    [data-testid="collapsedControl"] { display: none; }
-    .applicant-box { border: 1px solid #444c56; padding: 15px; border-radius: 10px; margin-bottom: 10px; background-color: #1c2128; }
-    .role-header { color: #539bf5; font-weight: bold; border-left: 5px solid #539bf5; padding-left: 10px; margin: 15px 0 10px 0; font-size: 22px; background-color: #262c33; }
+    html, body, [data-testid="stAppViewContainer"] { 
+        font-size: 22px !important; 
+        background-color: #1e252b !important; 
+        color: #c9d1d9 !important; 
+    }
+    .stButton>button { 
+        background-color: #2d333b !important; 
+        color: #adbac7 !important; 
+        border: 1px solid #444c56 !important; 
+    }
+    .stButton>button:hover { 
+        border-color: #539bf5 !important; 
+        color: #539bf5 !important; 
+    }
+    .report-card { 
+        background-color: #22272e !important; 
+        border: 1px solid #444c56 !important; 
+        color: #adbac7 !important; 
+    }
+    h1, h2, h3 { color: #539bf5 !important; }
+    .slot-y { background-color: #3e3610 !important; color: #f2cc60 !important; }
+    .slot-b { background-color: #14233a !important; color: #539bf5 !important; }
+    .slot-g { background-color: #162a1e !important; color: #57ab5a !important; }
+    .applicant-box { background-color: #1c2128 !important; color: #adbac7 !important; }
+    .role-header { color: #539bf5 !important; background-color: #262c33 !important; }
+    [data-testid="stMarkdownContainer"] { color: #c9d1d9 !important; }
+    [data-testid="stTextInput"] input { color: #c9d1d9 !important; background-color: #2d333b !important; }
     </style>
     """, unsafe_allow_html=True)
-
-
-# 自定義 CSS (V3.1.0: 22px 字體，護眼配色可切換，極簡報表卡片)
-# 根據護眼模式開關決定主題
-if st.session_state.get('eye_protection', True):
-    # 護眼模式（深色主題）
-    theme_css = '''
-    <style>
-    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #1e252b; color: #c9d1d9; }
-    .stButton>button { width: 100%; border-radius: 15px; height: 4.5em; font-weight: bold; font-size: 20px !important; background-color: #2d333b; color: #adbac7; border: 1px solid #444c56; transition: all 0.3s; }
-    .stButton>button:hover { border-color: #539bf5; color: #539bf5; }
-    .report-card { padding: 12px; border-radius: 15px; background-color: #22272e; border: 1px solid #444c56; margin-bottom: 15px; color: #adbac7; min-height: 100px; }
-    h1 { font-size: 36px !important; color: #539bf5 !important; }
-    h2 { font-size: 30px !important; color: #539bf5 !important; }
-    h3 { font-size: 22px !important; color: #539bf5 !important; margin-bottom: 8px; }
-    .slot-y { background-color: #3e3610; color: #f2cc60; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #634c18; }
-    .slot-b { background-color: #14233a; color: #539bf5; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #213e5a; }
-    .slot-g { background-color: #162a1e; color: #57ab5a; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #234d32; }
-    [data-testid="collapsedControl"] { display: none; }
-    .applicant-box { border: 1px solid #444c56; padding: 15px; border-radius: 10px; margin-bottom: 10px; background-color: #1c2128; }
-    .role-header { color: #539bf5; font-weight: bold; border-left: 5px solid #539bf5; padding-left: 10px; margin: 15px 0 10px 0; font-size: 22px; background-color: #262c33; }
-    </style>
-    '''
-
-# 自定義 CSS (V3.1.0: 22px 字體，護眼配色可切換，極簡報表卡片)
-# 根據護眼模式開關決定主題
-if st.session_state.get('eye_protection', True):
-    # 護眼模式（深色主題）
-    theme_css = '''
-    <style>
-    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #1e252b; color: #c9d1d9; }
-    .stButton>button { width: 100%; border-radius: 15px; height: 4.5em; font-weight: bold; font-size: 20px !important; background-color: #2d333b; color: #adbac7; border: 1px solid #444c56; transition: all 0.3s; }
-    .stButton>button:hover { border-color: #539bf5; color: #539bf5; }
-    .report-card { padding: 12px; border-radius: 15px; background-color: #22272e; border: 1px solid #444c56; margin-bottom: 15px; color: #adbac7; min-height: 100px; }
-    h1 { font-size: 36px !important; color: #539bf5 !important; }
-    h2 { font-size: 30px !important; color: #539bf5 !important; }
-    h3 { font-size: 22px !important; color: #539bf5 !important; margin-bottom: 8px; }
-    .slot-y { background-color: #3e3610; color: #f2cc60; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #634c18; }
-    .slot-b { background-color: #14233a; color: #539bf5; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #213e5a; }
-    .slot-g { background-color: #162a1e; color: #57ab5a; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #234d32; }
-    [data-testid="collapsedControl"] { display: none; }
-    .applicant-box { border: 1px solid #444c56; padding: 15px; border-radius: 10px; margin-bottom: 10px; background-color: #1c2128; }
-    .role-header { color: #539bf5; font-weight: bold; border-left: 5px solid #539bf5; padding-left: 10px; margin: 15px 0 10px 0; font-size: 22px; background-color: #262c33; }
-    </style>
-    '''
 else:
-    # 標準模式（淺色護眼主題）- 米白色背景，柔和不刺眼
-    theme_css = '''
+    # 標準模式（淺色護眼主題）- 米白色背景
+    st.markdown("""
     <style>
-    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #f5f5f0; color: #2d3748; }
-    .stButton>button { width: 100%; border-radius: 15px; height: 4.5em; font-weight: bold; font-size: 20px !important; background-color: #4a5568; color: #ffffff; border: 1px solid #4a5568; transition: all 0.3s; }
-    .stButton>button:hover { background-color: #2d3748; border-color: #2d3748; color: #ffffff; }
-    .report-card { padding: 12px; border-radius: 15px; background-color: #ffffff; border: 1px solid #e2e8f0; margin-bottom: 15px; color: #2d3748; min-height: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    h1 { font-size: 36px !important; color: #2c5282 !important; }
-    h2 { font-size: 30px !important; color: #2c5282 !important; }
-    h3 { font-size: 22px !important; color: #2c5282 !important; margin-bottom: 8px; }
-    .slot-y { background-color: #fefcbf; color: #975a16; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #d69e2e; }
-    .slot-b { background-color: #bee3f8; color: #2b6cb0; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #4299e1; }
-    .slot-g { background-color: #c6f6d5; color: #276749; padding: 6px 12px; border-radius: 8px; font-size: 18px; margin-bottom: 6px; border: 1px solid #48bb78; }
-    [data-testid="collapsedControl"] { display: none; }
-    .applicant-box { border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 10px; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .role-header { color: #2c5282; font-weight: bold; border-left: 5px solid #2c5282; padding-left: 10px; margin: 15px 0 10px 0; font-size: 22px; background-color: #ebf8ff; }
+    html, body, [data-testid="stAppViewContainer"] { 
+        font-size: 22px !important; 
+        background-color: #f5f5f0 !important; 
+        color: #2d3748 !important; 
+    }
+    .stButton>button { 
+        background-color: #4a5568 !important; 
+        color: #ffffff !important; 
+        border: 1px solid #4a5568 !important; 
+    }
+    .stButton>button:hover { 
+        background-color: #2d3748 !important; 
+        color: #ffffff !important; 
+    }
+    .report-card { 
+        background-color: #ffffff !important; 
+        border: 1px solid #e2e8f0 !important; 
+        color: #2d3748 !important; 
+    }
+    h1, h2, h3 { color: #2c5282 !important; }
+    .slot-y { background-color: #fefcbf !important; color: #975a16 !important; }
+    .slot-b { background-color: #bee3f8 !important; color: #2b6cb0 !important; }
+    .slot-g { background-color: #c6f6d5 !important; color: #276749 !important; }
+    .applicant-box { background-color: #ffffff !important; color: #2d3748 !important; }
+    .role-header { color: #2c5282 !important; background-color: #ebf8ff !important; }
+    [data-testid="stMarkdownContainer"] { color: #2d3748 !important; }
+    [data-testid="stTextInput"] input { color: #2d3748 !important; background-color: #ffffff !important; }
     </style>
-    '''
-
-st.markdown(theme_css, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 # ==========================================
 # --- 2. 輔助函數 ---
 # ==========================================
 
 def change_password_ui():
+    """修改密碼功能 - 只在登入後的個人設定分頁顯示"""
     st.subheader("🔐 修改個人密碼")
-
-with st.expander("點擊展開修改表單"):
+    with st.expander("點擊展開修改表單"):
         with st.form("pw_form"):
             old_p = st.text_input("輸入舊密碼", type="password")
             new_p = st.text_input("輸入新密碼", type="password")
@@ -239,17 +215,17 @@ def login_page():
                     st.rerun()
                 else:
                     st.session_state.login_attempts += 1
-                    st.error(f"❌ 用戶名稱或密碼錯誤 (剩餘嘗試次數: {5 - st.session_state.login_attempts})")
+                    st.error(f"❌ 用戶名稱或密碼錯誤 (剩餘嘗試次數：{5 - st.session_state.login_attempts})")
             except Exception as e:
-                st.error(f"⚠️ 系統錯誤: {str(e)}")
+                st.error(f"⚠️ 系統錯誤：{str(e)}")
 
 # ==========================================
 # --- 4. 管理員視圖 ---
 # ==========================================
 
 def admin_view():
-    st.title(f"👨‍✈️ 管理員: {st.session_state.username} (Ver: {CONFIG['VERSION']})")
-    tab1, tab2, tab3, tab4 = st.tabs(["📅 排班日曆", "📊 報表導出", "⚙️ 系統設定", "🔑 個人設定"])
+    st.title(f"👨‍✈️ 管理員：{st.session_state.username} (Ver: {CONFIG['VERSION']})")
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📅 排班日曆", "📊 報表導出", "👥 新增使用者", "⚙️ 系統設定", "🔑 個人設定"])
 
     # --- 核心資料抓取 ---
     res_all = db.get_all_shifts()
@@ -290,12 +266,11 @@ def admin_view():
             
             available_months = sorted(raw_df['year_month'].unique().tolist(), reverse=True)
             current_ym = date.today().strftime('%Y-%m')
-            selected_ym = st.selectbox("選擇顯示月份 (年-月)", available_months, index=available_months.index(current_ym) if current_ym in available_months else 0)
+            selected_ym = st.selectbox("選擇顯示月份 (年 - 月)", available_months, index=available_months.index(current_ym) if current_ym in available_months else 0)
             
             sel_year = int(selected_ym.split('-')[0])
             sel_month = int(selected_ym.split('-')[1])
             
-            # 根據 toggle 決定是否只顯示 Accepted
             if show_accepted_only:
                 df_filtered = raw_df[(raw_df['role'].isin(role_filter)) & 
                                     (raw_df['year_month'] == selected_ym) &
@@ -327,9 +302,9 @@ def admin_view():
                             m_count = len(day_data[day_data['slots'].apply(lambda x: "早班" in x)])
                             a_count = len(day_data[day_data['slots'].apply(lambda x: "中班" in x)])
                             e_count = len(day_data[day_data['slots'].apply(lambda x: "晚班" in x)])
-                            if m_count > 0: st.markdown(f'<div class="slot-y">早: {m_count}</div>', unsafe_allow_html=True)
-                            if a_count > 0: st.markdown(f'<div class="slot-b">中: {a_count}</div>', unsafe_allow_html=True)
-                            if e_count > 0: st.markdown(f'<div class="slot-g">晚: {e_count}</div>', unsafe_allow_html=True)
+                            if m_count > 0: st.markdown(f'<div class="slot-y">早：{m_count}</div>', unsafe_allow_html=True)
+                            if a_count > 0: st.markdown(f'<div class="slot-b">中：{a_count}</div>', unsafe_allow_html=True)
+                            if e_count > 0: st.markdown(f'<div class="slot-g">晚：{e_count}</div>', unsafe_allow_html=True)
                             if not day_data.empty:
                                 if st.button("查看", key=f"btn_{date_str}"):
                                     st.session_state.selected_date = date_str
@@ -345,11 +320,11 @@ def admin_view():
                     if not applicants.empty:
                         roles_in_slot = sorted(applicants['role'].unique().tolist())
                         for r_name in roles_in_slot:
-                            st.markdown(f'<div class="role-header">小組: {r_name}</div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="role-header">小組：{r_name}</div>', unsafe_allow_html=True)
                             role_applicants = applicants[applicants['role'] == r_name]
                             for _, row in role_applicants.iterrows():
                                 with st.container():
-                                    st.markdown(f'<div class="applicant-box">👤 <b>{row["username"]}</b> - 狀態: <i>{row["status"]}</i></div>', unsafe_allow_html=True)
+                                    st.markdown(f'<div class="applicant-box">👤 <b>{row["username"]}</b> - 狀態：<i>{row["status"]}</i></div>', unsafe_allow_html=True)
                                     if row['status'] == 'Pending':
                                         c1, c2, _ = st.columns([1, 1, 2])
                                         if c1.button("✅ 接受", key=f"acc_{row['id']}_{slot}_{r_name}"):
@@ -383,14 +358,12 @@ def admin_view():
                 info_fmt = workbook.add_format({'font_size': 12, 'bold': True})
                 header_fmt = workbook.add_format({'bold': True, 'bg_color': '#f2f2f2', 'border': 1})
                 
-                # 強制寫入標題
                 worksheet.merge_range('A1:G1', f"火星殖民計劃 - {report_type_name}", title_fmt)
-                worksheet.write('A2', f"報表範圍: {range_name}", info_fmt)
-                worksheet.write('A3', f"所屬月份: {month_str}", info_fmt)
-                worksheet.write('A4', f"生成日期: {datetime.now().strftime('%Y-%m-%d %H:%M')}", info_fmt)
-                worksheet.write('A5', f"平均時薪參考: ${CONFIG['HOURLY_RATE']}/hr", info_fmt)
+                worksheet.write('A2', f"報表範圍：{range_name}", info_fmt)
+                worksheet.write('A3', f"所屬月份：{month_str}", info_fmt)
+                worksheet.write('A4', f"生成日期：{datetime.now().strftime('%Y-%m-%d %H:%M')}", info_fmt)
+                worksheet.write('A5', f"平均時薪參考：${CONFIG['HOURLY_RATE']}/hr", info_fmt)
                 
-                # 總計行 (如果是摘要報表)
                 if is_summary:
                     last_row = len(df_to_export) + 6
                     worksheet.write(last_row, 0, "總計 (Total)", header_fmt)
@@ -400,16 +373,13 @@ def admin_view():
             return output.getvalue()
 
         def generate_calendar_excel(report_type, month_str, start_date, end_date):
-            """生成日曆式更表 (Picker/Packer 分欄)"""
             output = io.BytesIO()
             import xlsxwriter
             
-            # 過濾日期範圍內的數據
             df_cal = raw_df[(raw_df['shift_date_dt'] >= start_date) & 
                            (raw_df['shift_date_dt'] <= end_date) &
                            (raw_df['status'] == 'Accepted')].copy()
             
-            # 建立用戶角色映射 (Picker/Packer)
             users_data = db.get_all_users()
             user_role_map = {}
             if users_data:
@@ -422,13 +392,11 @@ def admin_view():
                     else:
                         user_role_map[u['username'].lower()] = 'PT'
             
-            # 時間槽
             time_slots = ["早班", "中班", "晚班"]
             time_slot_hours = {"早班": "09:00-14:00", "中班": "14:00-18:00", "晚班": "18:00-23:00"}
             day_names_zh = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
             day_names_en = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
             
-            # 生成日期列表
             date_list = []
             current = start_date
             while current <= end_date:
@@ -438,76 +406,39 @@ def admin_view():
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 workbook = writer.book
                 
-                # Formats
-                title_format = workbook.add_format({
-                    'bold': True, 'font_size': 18, 'font_color': '#0969da',
-                    'align': 'center', 'valign': 'vcenter', 'bg_color': '#f0f6fc'
-                })
-                
-                header_format = workbook.add_format({
-                    'bold': True, 'bg_color': '#d0d7de', 'border': 1,
-                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 11
-                })
-                
-                date_header_format = workbook.add_format({
-                    'bold': True, 'bg_color': '#e8f4ff', 'border': 1,
-                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 10
-                })
-                
-                cell_format = workbook.add_format({
-                    'border': 1, 'align': 'left', 'valign': 'top', 'text_wrap': True, 'font_size': 10
-                })
-                
-                weekend_format = workbook.add_format({
-                    'border': 1, 'align': 'left', 'valign': 'top', 'text_wrap': True,
-                    'font_size': 10, 'bg_color': '#fff4e6'
-                })
-                
-                slot_header_format = workbook.add_format({
-                    'bold': True, 'bg_color': '#cce5ff', 'border': 1,
-                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 10
-                })
-                
-                role_subheader_format = workbook.add_format({
-                    'bold': True, 'bg_color': '#e6f3ff', 'border': 1,
-                    'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 9
-                })
-                
+                title_format = workbook.add_format({'bold': True, 'font_size': 18, 'font_color': '#0969da', 'align': 'center', 'valign': 'vcenter', 'bg_color': '#f0f6fc'})
+                header_format = workbook.add_format({'bold': True, 'bg_color': '#d0d7de', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 11})
+                date_header_format = workbook.add_format({'bold': True, 'bg_color': '#e8f4ff', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 10})
+                cell_format = workbook.add_format({'border': 1, 'align': 'left', 'valign': 'top', 'text_wrap': True, 'font_size': 10})
+                weekend_format = workbook.add_format({'border': 1, 'align': 'left', 'valign': 'top', 'text_wrap': True, 'font_size': 10, 'bg_color': '#fff4e6'})
+                slot_header_format = workbook.add_format({'bold': True, 'bg_color': '#cce5ff', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 10})
+                role_subheader_format = workbook.add_format({'bold': True, 'bg_color': '#e6f3ff', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True, 'font_size': 9})
                 empty_format = workbook.add_format({'border': 1, 'bg_color': '#f9f9f9'})
                 
-                # ========== Weekly Calendar Sheet ==========
                 worksheet_weekly = workbook.add_worksheet('Weekly Calendar')
-                
-                # Title
                 worksheet_weekly.merge_range('A1:H1', f'火星殖民計劃 - 週更表日曆 (Weekly Roster)', title_format)
-                worksheet_weekly.write('A2', f"週期：{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')} | 生成：{datetime.now().strftime('%Y-%m-%d %H:%M')}", 
-                                      workbook.add_format({'italic': True, 'align': 'center'}))
+                worksheet_weekly.write('A2', f"週期：{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')} | 生成：{datetime.now().strftime('%Y-%m-%d %H:%M')}", workbook.add_format({'italic': True, 'align': 'center'}))
                 
-                # Write date headers (merge 2 columns per day)
-                for i, date in enumerate(date_list[:7]):  # Only first 7 days for weekly
+                for i, date in enumerate(date_list[:7]):
                     col_start = 1 + i * 2
                     col_end = col_start + 1
                     weekday = date.weekday()
-                    date_str = f"{date.strftime('%m/%d')}\n{day_names_zh[weekday]}\n{day_names_en[weekday]}"
+                    date_str = f"{date.strftime('%m/%d')}\\n{day_names_zh[weekday]}\\n{day_names_en[weekday]}"
                     worksheet_weekly.merge_range(4, col_start, 4, col_end, date_str, date_header_format)
                 
-                # Write Picker/Packer sub-headers for each day
                 for i in range(min(7, len(date_list))):
                     col_start = 1 + i * 2
                     worksheet_weekly.write(5, col_start, "Picker", role_subheader_format)
                     worksheet_weekly.write(5, col_start + 1, "Packer", role_subheader_format)
                 
-                # Write time slot labels in column A
                 for row_idx, slot in enumerate(time_slots):
-                    worksheet_weekly.write(6 + row_idx, 0, f"{slot}\n{time_slot_hours[slot]}", slot_header_format)
+                    worksheet_weekly.write(6 + row_idx, 0, f"{slot}\\n{time_slot_hours[slot]}", slot_header_format)
                 
-                # Fill in staff data
                 for row_idx, slot in enumerate(time_slots):
                     for day_idx, date in enumerate(date_list[:7]):
                         col_start = 1 + day_idx * 2
                         date_str = date.strftime('%Y-%m-%d')
                         
-                        # Get accepted shifts for this date and slot
                         day_slot_data = df_cal[(df_cal['shift_date'] == date_str) & 
                                               (df_cal['slots'].apply(lambda x: slot in x if isinstance(x, list) else slot in str(x)))]
                         
@@ -522,7 +453,6 @@ def admin_view():
                             elif role == 'Packer':
                                 packer_names.append(staff_row['username'])
                             else:
-                                # Default: assign to picker if role not specified
                                 picker_names.append(staff_row['username'])
                         
                         picker_str = ", ".join(picker_names) if picker_names else "-"
@@ -532,46 +462,34 @@ def admin_view():
                         worksheet_weekly.write(6 + row_idx, col_start, picker_str, fmt)
                         worksheet_weekly.write(6 + row_idx, col_start + 1, packer_str, fmt)
                 
-                # Set column widths
-                worksheet_weekly.set_column(0, 0, 16)  # Time slot labels
+                worksheet_weekly.set_column(0, 0, 16)
                 for i in range(min(7, len(date_list))):
-                    worksheet_weekly.set_column(1 + i * 2, 1 + i * 2, 13)  # Picker columns
-                    worksheet_weekly.set_column(2 + i * 2, 2 + i * 2, 13)  # Packer columns
+                    worksheet_weekly.set_column(1 + i * 2, 1 + i * 2, 13)
+                    worksheet_weekly.set_column(2 + i * 2, 2 + i * 2, 13)
                 
-                # Set row heights
-                worksheet_weekly.set_row(4, 45)  # Date header
-                worksheet_weekly.set_row(5, 22)  # Picker/Packer sub-header
+                worksheet_weekly.set_row(4, 45)
+                worksheet_weekly.set_row(5, 22)
                 for row_idx in range(len(time_slots)):
-                    worksheet_weekly.set_row(6 + row_idx, 55)  # Data rows
+                    worksheet_weekly.set_row(6 + row_idx, 55)
                 
-                # ========== Monthly Calendar Sheet ==========
                 worksheet_monthly = workbook.add_worksheet('Monthly Calendar')
-                
-                # Title
                 worksheet_monthly.merge_range('A1:H1', f'火星殖民計劃 - 月更表日曆 (Monthly Roster)', title_format)
-                worksheet_monthly.write('A2', f"月份：{month_str} | 生成：{datetime.now().strftime('%Y-%m-%d %H:%M')}", 
-                                       workbook.add_format({'italic': True, 'align': 'center'}))
+                worksheet_monthly.write('A2', f"月份：{month_str} | 生成：{datetime.now().strftime('%Y-%m-%d %H:%M')}", workbook.add_format({'italic': True, 'align': 'center'}))
                 
-                # Header row: Day names
                 for i, day_name in enumerate(day_names_en):
-                    worksheet_monthly.write(4, i, f"{day_name}\n{day_names_zh[i]}", header_format)
+                    worksheet_monthly.write(4, i, f"{day_name}\\n{day_names_zh[i]}", header_format)
                 
-                # Get first day of month calendar
                 first_day = date_list[0] if date_list else start_date
-                start_weekday = first_day.weekday()  # 0 = Monday
-                
-                # Calculate number of weeks needed
+                start_weekday = first_day.weekday()
                 num_days = len(date_list)
                 num_weeks = (start_weekday + num_days + 6) // 7
                 
-                # Fill calendar grid
                 date_idx = 0
                 for week_num in range(num_weeks):
                     for day_num in range(7):
                         row = 5 + week_num
                         col = day_num
                         
-                        # Check if this is a valid date in the range
                         if week_num == 0 and day_num < start_weekday:
                             worksheet_monthly.write(row, col, "", empty_format)
                         elif date_idx >= num_days:
@@ -580,9 +498,8 @@ def admin_view():
                             current_date = date_list[date_idx]
                             date_idx += 1
                             
-                            # Build cell content with all 3 time slots
-                            cell_content = f"📅 {current_date.strftime('%m/%d')}\n"
-                            cell_content += "─" * 18 + "\n"
+                            cell_content = f"📅 {current_date.strftime('%m/%d')}\\n"
+                            cell_content += "─" * 18 + "\\n"
                             
                             for slot in time_slots:
                                 date_str = current_date.strftime('%Y-%m-%d')
@@ -604,48 +521,31 @@ def admin_view():
                                 
                                 p_str = ",".join(picker_names[:2]) if picker_names else "-"
                                 k_str = ",".join(packer_names[:2]) if packer_names else "-"
-                                cell_content += f"{slot[:1]}: P[{p_str}] | K[{k_str}]\n"
+                                cell_content += f"{slot[:1]}: P[{p_str}] | K[{k_str}]\\n"
                             
                             fmt = weekend_format if day_num >= 5 else cell_format
                             worksheet_monthly.write(row, col, cell_content, fmt)
                 
-                # Set column widths for monthly view
                 for col in range(7):
                     worksheet_monthly.set_column(col, col, 20)
                 
-                # Set row heights
                 for row in range(5, 5 + num_weeks):
                     worksheet_monthly.set_row(row, 110)
                 
-                # Add legend
                 legend_row = 5 + num_weeks + 1
                 worksheet_monthly.write(legend_row, 0, "圖例 Legend:", workbook.add_format({'bold': True}))
                 worksheet_monthly.write(legend_row, 2, "P = Picker (執單)", cell_format)
                 worksheet_monthly.write(legend_row, 3, "K = Packer (包裝)", cell_format)
                 worksheet_monthly.write(legend_row, 4, "早/中/晚 = 時段", cell_format)
                 
-                # ========== Staff Count Summary Sheet ==========
                 worksheet_summary = workbook.add_worksheet('Staff Count Summary')
-                
-                # Title
                 worksheet_summary.merge_range('A1:E1', f'人員統計摘要 (Staff Count Summary)', title_format)
-                worksheet_summary.write('A2', f"期間：{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')} | 生成：{datetime.now().strftime('%Y-%m-%d %H:%M')}", 
-                                       workbook.add_format({'italic': True, 'align': 'center'}))
+                worksheet_summary.write('A2', f"期間：{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')} | 生成：{datetime.now().strftime('%Y-%m-%d %H:%M')}", workbook.add_format({'italic': True, 'align': 'center'}))
                 
-                # Headers
-                summary_header_format = workbook.add_format({
-                    'bold': True, 'bg_color': '#d0d7de', 'border': 1,
-                    'align': 'center', 'valign': 'vcenter', 'font_size': 11
-                })
-                summary_cell_format = workbook.add_format({
-                    'border': 1, 'align': 'center', 'valign': 'vcenter', 'font_size': 11
-                })
-                total_row_format = workbook.add_format({
-                    'bold': True, 'bg_color': '#e8f4ff', 'border': 1,
-                    'align': 'center', 'valign': 'vcenter', 'font_size': 11
-                })
+                summary_header_format = workbook.add_format({'bold': True, 'bg_color': '#d0d7de', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'font_size': 11})
+                summary_cell_format = workbook.add_format({'border': 1, 'align': 'center', 'valign': 'vcenter', 'font_size': 11})
+                total_row_format = workbook.add_format({'bold': True, 'bg_color': '#e8f4ff', 'border': 1, 'align': 'center', 'valign': 'vcenter', 'font_size': 11})
                 
-                # Write headers
                 worksheet_summary.write('A4', '日期', summary_header_format)
                 worksheet_summary.write('B4', '星期', summary_header_format)
                 worksheet_summary.write('C4', '時段', summary_header_format)
@@ -653,7 +553,6 @@ def admin_view():
                 worksheet_summary.write('E4', 'Packer 人數', summary_header_format)
                 worksheet_summary.write('F4', '總人數', summary_header_format)
                 
-                # Calculate and write staff counts per day/slot
                 row_num = 5
                 for current_date in date_list:
                     date_str = current_date.strftime('%Y-%m-%d')
@@ -661,7 +560,6 @@ def admin_view():
                     day_name = f"{day_names_zh[weekday]} ({day_names_en[weekday]})"
                     
                     for slot in time_slots:
-                        # Get accepted shifts for this date and slot
                         day_slot_data = df_cal[(df_cal['shift_date'] == date_str) & 
                                               (df_cal['slots'].apply(lambda x: slot in x if isinstance(x, list) else slot in str(x)))]
                         
@@ -676,7 +574,7 @@ def admin_view():
                             elif role == 'Packer':
                                 packer_count += 1
                             else:
-                                picker_count += 1  # Default to Picker
+                                picker_count += 1
                         
                         total_count = picker_count + packer_count
                         
@@ -688,16 +586,13 @@ def admin_view():
                         worksheet_summary.write(row_num, 5, total_count, summary_cell_format)
                         row_num += 1
                     
-                    # Add blank row after each day for readability
                     worksheet_summary.write(row_num, 0, "", workbook.add_format({'border': 0}))
                     row_num += 1
                 
-                # Add summary statistics at the bottom
                 row_num += 1
                 worksheet_summary.write(row_num, 0, "📊 統計摘要 (Summary Statistics)", total_row_format)
                 row_num += 1
                 
-                # Calculate totals per slot
                 worksheet_summary.write(row_num, 0, "時段總計 (Slot Totals)", summary_header_format)
                 worksheet_summary.write(row_num, 1, "", summary_header_format)
                 worksheet_summary.write(row_num, 2, "", summary_header_format)
@@ -707,8 +602,6 @@ def admin_view():
                 row_num += 1
                 
                 for slot in time_slots:
-                    slot_rows = len([d for d in date_list])
-                    # Recalculate totals for this slot
                     total_picker = 0
                     total_packer = 0
                     for current_date in date_list:
@@ -733,13 +626,12 @@ def admin_view():
                     worksheet_summary.write(row_num, 5, total_picker + total_packer, total_row_format)
                     row_num += 1
                 
-                # Set column widths
-                worksheet_summary.set_column('A:A', 12)  # Date
-                worksheet_summary.set_column('B:B', 18)  # Day
-                worksheet_summary.set_column('C:C', 20)  # Slot
-                worksheet_summary.set_column('D:D', 12)  # Picker count
-                worksheet_summary.set_column('E:E', 12)  # Packer count
-                worksheet_summary.set_column('F:F', 10)  # Total
+                worksheet_summary.set_column('A:A', 12)
+                worksheet_summary.set_column('B:B', 18)
+                worksheet_summary.set_column('C:C', 20)
+                worksheet_summary.set_column('D:D', 12)
+                worksheet_summary.set_column('E:E', 12)
+                worksheet_summary.set_column('F:F', 10)
             
             return output.getvalue()
 
@@ -748,7 +640,7 @@ def admin_view():
 
         with col_rep1:
             st.markdown('<div class="report-card"><h3>📅 更表 (Roster)</h3>', unsafe_allow_html=True)
-            rep_type = st.radio("範圍", ["週報表 (1-7日)", "雙週報表 (1-14日)", "月報表 (全月)"], key="roster_type")
+            rep_type = st.radio("範圍", ["週報表 (1-7 日)", "雙週報表 (1-14 日)", "月報表 (全月)"], key="roster_type")
             if st.button("生成更表"):
                 days = 7 if "週" in rep_type and "雙" not in rep_type else (14 if "雙週" in rep_type else 31)
                 df_rep = raw_df[raw_df['year_month'] == sel_report_month].copy()
@@ -764,7 +656,7 @@ def admin_view():
 
         with col_rep2:
             st.markdown('<div class="report-card"><h3>💰 工時統計 (Hours)</h3>', unsafe_allow_html=True)
-            work_type = st.radio("範圍", ["週報表 (1-7日)", "雙週報表 (1-14日)", "月報表 (全月)"], key="work_type")
+            work_type = st.radio("範圍", ["週報表 (1-7 日)", "雙週報表 (1-14 日)", "月報表 (全月)"], key="work_type")
             if st.button("生成工時報表"):
                 days = 7 if "週" in work_type and "雙" not in work_type else (14 if "雙週" in work_type else 31)
                 df_rep = raw_df[raw_df['year_month'] == sel_report_month].copy()
@@ -780,7 +672,7 @@ def admin_view():
 
         with col_rep3:
             st.markdown('<div class="report-card"><h3>💵 每日成本預估 (Daily Cost)</h3>', unsafe_allow_html=True)
-            cost_type = st.radio("範圍", ["週預估 (1-7日)", "雙週預估 (1-14日)", "月預估 (全月)"], key="cost_type")
+            cost_type = st.radio("範圍", ["週預估 (1-7 日)", "雙週預估 (1-14 日)", "月預估 (全月)"], key="cost_type")
             if st.button("生成每日成本報表"):
                 days = 7 if "週" in cost_type and "雙" not in cost_type else (14 if "雙週" in cost_type else 31)
                 df_rep = raw_df[raw_df['year_month'] == sel_report_month].copy()
@@ -812,7 +704,6 @@ def admin_view():
                 else: st.warning("無數據")
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # === New Row: Calendar View Reports ===
         st.divider()
         st.subheader("📆 日曆式更表 (Calendar View)")
         st.write("以日曆格式顯示，列為時段、欄為日期，並分列 Picker 與 Packer 人員")
@@ -823,10 +714,9 @@ def admin_view():
             st.markdown('<div class="report-card"><h3>📅 週更表日曆 (Weekly Calendar)</h3>', unsafe_allow_html=True)
             st.write("選擇要導出的週次，顯示該週 7 天的日曆視圖")
             
-            # Week selector
             year, month = map(int, sel_report_month.split('-'))
             first_day = datetime(year, month, 1)
-            # Calculate number of weeks in month
+            import calendar
             _, num_days = calendar.monthrange(year, month)
             num_weeks = (first_day.weekday() + num_days + 6) // 7
             week_options = [f"第 {i+1} 週" for i in range(num_weeks)]
@@ -834,8 +724,7 @@ def admin_view():
             selected_week = st.selectbox("選擇週次", week_options, key="week_selector_cal")
             week_num = int(selected_week.replace("第 ", "").replace(" 週", "")) - 1
             
-            # Calculate date range for selected week
-            days_before_monday = first_day.weekday()  # 0=Monday
+            days_before_monday = first_day.weekday()
             week_start = first_day - timedelta(days=days_before_monday) + timedelta(weeks=week_num)
             week_end = week_start + timedelta(days=6)
             
@@ -850,7 +739,6 @@ def admin_view():
             st.markdown('<div class="report-card"><h3>📆 月更表日曆 (Monthly Calendar)</h3>', unsafe_allow_html=True)
             st.write("顯示完整月份的日曆視圖，每日格子包含所有時段與人員")
             if st.button("生成月更表日曆", key="cal_monthly_btn"):
-                # Get full month
                 year, month = map(int, sel_report_month.split('-'))
                 start_d = datetime(year, month, 1)
                 if month == 12:
@@ -862,6 +750,46 @@ def admin_view():
             st.markdown('</div>', unsafe_allow_html=True)
 
     with tab3:
+        st.subheader("👥 新增使用者")
+        
+        with st.form("add_user_form"):
+            new_username = st.text_input("用戶名稱 (Username)").strip().lower()
+            new_password = st.text_input("密碼 (Password)", type="password")
+            new_role = st.selectbox("職能角色 (Role)", ["PT", "Picker", "Packer", "Admin"])
+            
+            if st.form_submit_button("新增使用者"):
+                if not new_username or not new_password:
+                    st.error("❌ 請填寫用戶名稱和密碼")
+                else:
+                    try:
+                        # 檢查用戶是否已存在
+                        existing = db.get_all_users()
+                        if any(u['username'].lower() == new_username for u in existing):
+                            st.error("❌ 用戶名稱已存在")
+                        else:
+                            # 新增用戶
+                            import bcrypt
+                            hashed_pw = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                            db.supabase.table("users").insert({
+                                "username": new_username,
+                                "password": hashed_pw,
+                                "role": new_role
+                            }).execute()
+                            st.success(f"✅ 已成功新增使用者：{new_username} ({new_role})")
+                    except Exception as e:
+                        st.error(f"⚠️ 新增失敗：{str(e)}")
+        
+        st.divider()
+        st.subheader("📋 現有使用者清單")
+        users_data = db.get_all_users()
+        if users_data:
+            users_df = pd.DataFrame(users_data)
+            users_df.columns = ['用戶名稱', '職能角色']
+            st.dataframe(users_df, use_container_width=True)
+        else:
+            st.info("📭 目前無使用者資料")
+
+    with tab4:
         st.subheader("⏰ 報更截止設定")
         deadline = db.get_system_settings()
         is_enabled = st.toggle("啟用截止功能", value=deadline.get("enabled", True))
@@ -872,7 +800,7 @@ def admin_view():
             db.update_system_settings({"day": new_day, "time": new_time.strftime("%H:%M"), "enabled": is_enabled})
             st.success("設定已更新")
 
-    with tab4:
+    with tab5:
         change_password_ui()
 
 def pt_view():
@@ -955,7 +883,6 @@ def pt_view():
             df_pt['slots_str'] = df_pt['slots'].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
             df_pt = df_pt.sort_values('shift_date_dt', ascending=True)
             
-            # 狀態篩選
             status_filter = st.selectbox("篩選狀態", ["全部", "Pending", "Accepted", "Cancelled", "Rejected"], key="status_filter_pt")
             if status_filter != "全部":
                 df_pt = df_pt[df_pt['status'] == status_filter]
@@ -997,13 +924,26 @@ def pt_view():
             
             for idx, row in df_pt.iterrows():
                 with st.container():
-                    col1, col2, col3 = st.columns([3, 2, 2])
+                    col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
                     col1.markdown(f"**📅 {row['shift_date']}**")
                     col2.markdown(f"⏰ {row['slots_str']}")
                     
-                    # 狀態顯示
                     status_emoji = {"Pending": "⏳", "Accepted": "✅", "Cancelled": "❌", "Rejected": "🚫"}.get(row['status'], "•")
                     col3.markdown(f"{status_emoji} {row['status']}")
+                    
+                    # 取消報更按鈕 (僅限 Pending 和 Accepted)
+                    if row['status'] in ["Pending", "Accepted"]:
+                        if col4.button("❌ 取消報更", key=f"cancel_{row['id']}"):
+                            if row['status'] == "Pending":
+                                db.delete_shift(row['id'])
+                                st.success("✅ 已刪除報更申請")
+                            else:
+                                db.cancel_shift(row['id'])
+                                st.warning("⚠️ 已取消已接受的報更")
+                            st.cache_data.clear()
+                            st.rerun()
+                    else:
+                        col4.markdown("•")
                     
                     st.divider()
         else:
