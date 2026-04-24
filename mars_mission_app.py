@@ -168,6 +168,14 @@ else:
     '''
 
 st.markdown(theme_css, unsafe_allow_html=True)
+
+# ==========================================
+# --- 2. 輔助函數 ---
+# ==========================================
+
+def change_password_ui():
+    st.subheader("🔐 修改個人密碼")
+
 with st.expander("點擊展開修改表單"):
         with st.form("pw_form"):
             old_p = st.text_input("輸入舊密碼", type="password")
