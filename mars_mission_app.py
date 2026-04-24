@@ -78,200 +78,43 @@ if eye_protection_mode:
     # ============ 護眼模式（深色主題）============
     st.markdown("""
     <style>
-    /* 全局背景與文字 */
-    html, body, [data-testid="stAppViewContainer"] { 
-        font-size: 22px !important; 
-        background-color: #1e252b !important; 
-        color: #c9d1d9 !important; 
-    }
-    
-    /* 所有文字元素 */
-    h1, h2, h3, h4, h5, h6 { 
-        color: #539bf5 !important; 
-    }
-    p, span, div, label { 
-        color: #c9d1d9 !important; 
-    }
-    [data-testid="stMarkdownContainer"] { 
-        color: #c9d1d9 !important; 
-    }
-    [data-testid="stMarkdownContainer"] p { 
-        color: #c9d1d9 !important; 
-    }
-    
-    /* 按鈕樣式 */
-    .stButton>button { 
-        background-color: #30363d !important; 
-        color: #79c0ff !important; 
-        border: 1px solid #444c56 !important; 
-        font-weight: bold !important;
-    }
-    .stButton>button:hover { 
-        background-color: #444c56 !important; 
-        color: #539bf5 !important; 
-        border-color: #539bf5 !important; 
-    }
-    
-    /* 卡片與容器 */
-    .report-card { 
-        background-color: #22272e !important; 
-        border: 1px solid #444c56 !important; 
-        color: #adbac7 !important; 
-    }
-    .applicant-box { 
-        background-color: #1c2128 !important; 
-        border: 1px solid #444c56 !important; 
-        color: #adbac7 !important; 
-    }
-    .role-header { 
-        color: #539bf5 !important; 
-        background-color: #262c33 !important; 
-        border-left: 5px solid #539bf5 !important; 
-    }
-    
-    /* 時段標籤 */
-    .slot-y { 
-        background-color: #3e3610 !important; 
-        color: #f2cc60 !important; 
-        border: 1px solid #634c18 !important; 
-    }
-    .slot-b { 
-        background-color: #14233a !important; 
-        color: #539bf5 !important; 
-        border: 1px solid #213e5a !important; 
-    }
-    .slot-g { 
-        background-color: #162a1e !important; 
-        color: #57ab5a !important; 
-        border: 1px solid #234d32 !important; 
-    }
-    
-    /* 輸入框 */
-    [data-testid="stTextInput"] input, 
-    [data-testid="stTextArea"] textarea { 
-        color: #c9d1d9 !important; 
-        background-color: #2d333b !important; 
-        border-color: #444c56 !important; 
-    }
-    [data-testid="stTextInput"] label,
-    [data-testid="stTextArea"] label {
-        color: #c9d1d9 !important;
-    }
-    
-    /* 選擇器 */
-    [data-testid="stSelectbox"] label {
-        color: #c9d1d9 !important;
-    }
-    
-    /* 警告與訊息 */
-    .stAlert { 
-        background-color: #262c33 !important; 
-        color: #c9d1d9 !important; 
-        border: 1px solid #444c56 !important; 
-    }
+    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #1e252b !important; color: #c9d1d9 !important; }
+    h1, h2, h3, h4, h5, h6, p, span, div, label, a { color: #c9d1d9 !important; }
+    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p { color: #c9d1d9 !important; }
+    .stButton>button { background-color: #30363d !important; color: #79c0ff !important; border: 1px solid #444c56 !important; font-weight: bold !important; }
+    .stButton>button:hover { background-color: #444c56 !important; color: #539bf5 !important; border-color: #539bf5 !important; }
+    .report-card, .applicant-box { background-color: #22272e !important; border: 1px solid #444c56 !important; color: #adbac7 !important; }
+    .role-header { color: #539bf5 !important; background-color: #262c33 !important; border-left: 5px solid #539bf5 !important; }
+    .slot-y { background-color: #3e3610 !important; color: #f2cc60 !important; }
+    .slot-b { background-color: #14233a !important; color: #539bf5 !important; }
+    .slot-g { background-color: #162a1e !important; color: #57ab5a !important; }
+    [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #c9d1d9 !important; background-color: #2d333b !important; }
+    [data-testid="stTextInput"] label, [data-testid="stSelectbox"] label { color: #c9d1d9 !important; }
+    .stAlert { background-color: #262c33 !important; color: #c9d1d9 !important; }
     </style>
     """, unsafe_allow_html=True)
 else:
     # ============ 標準模式（淺色柔和主題）============
     st.markdown("""
     <style>
-    /* 全局背景與文字 */
-    html, body, [data-testid="stAppViewContainer"] { 
-        font-size: 22px !important; 
-        background-color: #f0f4f8 !important; 
-        color: #374151 !important; 
-    }
-    
-    /* 所有文字元素 */
-    h1, h2, h3, h4, h5, h6 { 
-        color: #2563eb !important; 
-    }
-    p, span, div, label { 
-        color: #374151 !important; 
-    }
-    [data-testid="stMarkdownContainer"] { 
-        color: #374151 !important; 
-    }
-    [data-testid="stMarkdownContainer"] p { 
-        color: #374151 !important; 
-    }
-    
-    /* 按鈕樣式 - 柔和藍色 */
-    .stButton>button { 
-        background-color: #60a5fa !important; 
-        color: #ffffff !important; 
-        border: 1px solid #60a5fa !important; 
-        font-weight: bold !important;
-    }
-    .stButton>button:hover { 
-        background-color: #3b82f6 !important; 
-        color: #ffffff !important; 
-        border-color: #2563eb !important; 
-    }
-    
-    /* 卡片與容器 */
-    .report-card { 
-        background-color: #ffffff !important; 
-        border: 1px solid #e5e7eb !important; 
-        color: #374151 !important; 
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-    }
-    .applicant-box { 
-        background-color: #ffffff !important; 
-        border: 1px solid #e5e7eb !important; 
-        color: #374151 !important; 
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-    }
-    .role-header { 
-        color: #2563eb !important; 
-        background-color: #eff6ff !important; 
-        border-left: 5px solid #2563eb !important; 
-    }
-    
-    /* 時段標籤 - 柔和配色 */
-    .slot-y { 
-        background-color: #fef3c7 !important; 
-        color: #92400e !important; 
-        border: 1px solid #f59e0b !important; 
-    }
-    .slot-b { 
-        background-color: #dbeafe !important; 
-        color: #1e40af !important; 
-        border: 1px solid #3b82f6 !important; 
-    }
-    .slot-g { 
-        background-color: #d1fae5 !important; 
-        color: #047857 !important; 
-        border: 1px solid #10b981 !important; 
-    }
-    
-    /* 輸入框 */
-    [data-testid="stTextInput"] input, 
-    [data-testid="stTextArea"] textarea { 
-        color: #374151 !important; 
-        background-color: #ffffff !important; 
-        border-color: #d1d5db !important; 
-    }
-    [data-testid="stTextInput"] label,
-    [data-testid="stTextArea"] label {
-        color: #374151 !important;
-    }
-    
-    /* 選擇器 */
-    [data-testid="stSelectbox"] label {
-        color: #374151 !important;
-    }
-    
-    /* 警告與訊息 */
-    .stAlert { 
-        background-color: #f9fafb !important; 
-        color: #374151 !important; 
-        border: 1px solid #e5e7eb !important; 
-    }
+    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #f0f4f8 !important; color: #374151 !important; }
+    h1, h2, h3, h4, h5, h6, p, span, div, label, a { color: #374151 !important; }
+    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p { color: #374151 !important; }
+    .stButton>button { background-color: #60a5fa !important; color: #ffffff !important; border: 1px solid #60a5fa !important; font-weight: bold !important; }
+    .stButton>button:hover { background-color: #3b82f6 !important; color: #ffffff !important; border-color: #2563eb !important; }
+    .report-card, .applicant-box { background-color: #ffffff !important; border: 1px solid #e5e7eb !important; color: #374151 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; }
+    .role-header { color: #2563eb !important; background-color: #eff6ff !important; border-left: 5px solid #2563eb !important; }
+    .slot-y { background-color: #fef3c7 !important; color: #92400e !important; }
+    .slot-b { background-color: #dbeafe !important; color: #1e40af !important; }
+    .slot-g { background-color: #d1fae5 !important; color: #047857 !important; }
+    [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #374151 !important; background-color: #ffffff !important; }
+    [data-testid="stTextInput"] label, [data-testid="stSelectbox"] label { color: #374151 !important; }
+    .stAlert { background-color: #f9fafb !important; color: #374151 !important; border: 1px solid #e5e7eb !important; }
     </style>
     """, unsafe_allow_html=True)
 
 # ==========================================
+# --- 2. 輔助函數 ---# ==========================================
 # --- 2. 輔助函數 ---
 # ==========================================
 
