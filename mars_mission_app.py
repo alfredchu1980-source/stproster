@@ -48,13 +48,9 @@ hide_ui_css = """
     .stAppDeployButton {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* 隱藏右下角 Manage App */
-    .viewerBadge {visibility: hidden;}
     [data-testid="stToolbar"] {visibility: hidden;}
     
     /* 隱藏底部 Streamlit logo */
-    .stAppFooter {visibility: hidden;}
-    footer {visibility: hidden;}
     </style>
 """
 st.markdown(hide_ui_css, unsafe_allow_html=True)
