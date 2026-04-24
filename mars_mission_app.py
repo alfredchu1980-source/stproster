@@ -26,7 +26,24 @@ CONFIG = {
 }
 
 # 隱藏左側欄
-st.set_page_config(page_title=CONFIG["SYSTEM_NAME"], page_icon="📅", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title=CONFIG["SYSTEM_NAME"], 
+    page_icon="📅", 
+    layout="wide", 
+    initial_sidebar_state="collapsed",
+    menu_items=None
+)
+
+# PWA Meta Tags for Mobile Home Screen
+st.markdown("""
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="報更系統">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2693/2693507.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/2693/2693507.png">
+    <link rel="manifest" href="/manifest.json">
+    """, unsafe_allow_html=True)
 
 # --- Top Right: Status ---
 col_top1, col_top2 = st.columns([7, 3])
@@ -156,6 +173,9 @@ def admin_view():
         raw_df = pd.DataFrame()
 
     with tab1:
+        # 新增：已核准班表查看
+        show_accepted_only = st.toggle("📱 顯示已核准班表 (Mobile View)", value=False, key="show_accepted_toggle")
+        
         col_h, col_btn = st.columns([3, 1])
         col_h.subheader("排班概覽")
         if col_btn.button("✅ 全部接受 (Accept All)", type="primary"):
@@ -178,7 +198,14 @@ def admin_view():
             sel_year = int(selected_ym.split('-')[0])
             sel_month = int(selected_ym.split('-')[1])
             
-            df_filtered = raw_df[(raw_df['role'].isin(role_filter)) & (raw_df['year_month'] == selected_ym)]
+            # 根據 toggle 決定是否只顯示 Accepted
+            if show_accepted_only:
+                df_filtered = raw_df[(raw_df['role'].isin(role_filter)) & 
+                                    (raw_df['year_month'] == selected_ym) &
+                                    (raw_df['status'] == 'Accepted')]
+                st.info("📱 目前顯示：已核准的班表 (Accepted only)")
+            else:
+                df_filtered = raw_df[(raw_df['role'].isin(role_filter)) & (raw_df['year_month'] == selected_ym)]
         else:
             df_filtered = pd.DataFrame()
             sel_year, sel_month = date.today().year, date.today().month
@@ -822,11 +849,68 @@ def pt_view():
             st.error("❌ 已超過截止時間")
 
     with tab2:
+        st.subheader("📜 我的報更紀錄")
         res = db.get_user_shifts(st.session_state.username)
         if res.data:
             df_pt = pd.DataFrame(res.data)
-            df_pt['shift_date'] = pd.to_datetime(df_pt['shift_date']).dt.strftime('%Y-%m-%d')
-            st.dataframe(df_pt[['shift_date', 'slots', 'status']])
+            df_pt['shift_date_dt'] = pd.to_datetime(df_pt['shift_date'])
+            df_pt['shift_date'] = df_pt['shift_date_dt'].dt.strftime('%Y-%m-%d')
+            df_pt['slots_str'] = df_pt['slots'].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
+            df_pt = df_pt.sort_values('shift_date_dt', ascending=True)
+            
+            # 狀態篩選
+            status_filter = st.selectbox("篩選狀態", ["全部", "Pending", "Accepted", "Cancelled", "Rejected"], key="status_filter_pt")
+            if status_filter != "全部":
+                df_pt = df_pt[df_pt['status'] == status_filter]
+            
+            st.write(f"共 {len(df_pt)} 筆紀錄")
+            
+            # 行事曆同步按鈕
+            st.divider()
+            st.subheader("📱 同步至手機行事曆")
+            st.write("將已核准的班表同步到您的手機行事曆（Google Calendar、Apple Calendar 等）")
+            
+            accepted_shifts = [s for s in res.data if s.get('status') == 'Accepted']
+            if accepted_shifts:
+                col_cal1, col_cal2 = st.columns([3, 1])
+                
+                with col_cal1:
+                    st.info(f"📊 目前有 {len(accepted_shifts)} 個已核准的班表可同步")
+                
+                with col_cal2:
+                    ics_content = db.generate_ics_file_for_user(st.session_state.username, accepted_shifts, CONFIG["SYSTEM_NAME"])
+                    st.download_button(
+                        "📥 下載行事曆 (.ics)",
+                        ics_content,
+                        f"Shifts_{st.session_state.username}_{date.today().strftime('%Y%m%d')}.ics",
+                        key="download_ics"
+                    )
+                
+                st.markdown("""
+                **如何加入手機行事曆：**
+                - **iPhone**: 下載後開啟 .ics 檔案 → 選擇「加入至日曆」
+                - **Android**: 下載後開啟 .ics 檔案 → 選擇「匯入至 Google 日曆」
+                - **電腦**: 將 .ics 檔案拖曳至 Google Calendar 或 Outlook
+                """)
+            else:
+                st.info("📭 目前沒有已核准的班表可同步")
+            
+            st.divider()
+            st.subheader("📋 班表明細")
+            
+            for idx, row in df_pt.iterrows():
+                with st.container():
+                    col1, col2, col3 = st.columns([3, 2, 2])
+                    col1.markdown(f"**📅 {row['shift_date']}**")
+                    col2.markdown(f"⏰ {row['slots_str']}")
+                    
+                    # 狀態顯示
+                    status_emoji = {"Pending": "⏳", "Accepted": "✅", "Cancelled": "❌", "Rejected": "🚫"}.get(row['status'], "•")
+                    col3.markdown(f"{status_emoji} {row['status']}")
+                    
+                    st.divider()
+        else:
+            st.info("📭 目前尚無報更紀錄")
 
     with tab3:
         change_password_ui()
