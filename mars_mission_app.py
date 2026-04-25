@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.1",
+    "VERSION": "3.8.2",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -251,22 +251,61 @@ if eye_protection_mode:
     /* 警告訊息 */
     .stAlert { background-color: #262c33 !important; color: #c9d1d9 !important; border: 1px solid #444c56 !important; }
     
-    /* 同事班表高亮 - 早班 (柔和黃色) */
+    /* 同事班表高亮 - 早班 (明亮黃色 - 兩種模式都清晰) */
     .colleague-morning {
-        background-color: #424200 !important;
-        border: 2px solid #fdd835 !important;
+        background: linear-gradient(135deg, #9e9d24 0%, #fdd835 100%) !important;
+        border: 3px solid #fbc02d !important;
+        box-shadow: inset 0 0 10px rgba(251, 192, 45, 0.4) !important;
     }
     
-    /* 同事班表高亮 - 中班 (柔和橙色) */
+    /* 同事班表高亮 - 中班 (明亮橙色 - 兩種模式都清晰) */
     .colleague-afternoon {
-        background-color: #4e342e !important;
-        border: 2px solid #ff7043 !important;
+        background: linear-gradient(135deg, #e65100 0%, #ff7043 100%) !important;
+        border: 3px solid #f57c00 !important;
+        box-shadow: inset 0 0 10px rgba(245, 124, 0, 0.4) !important;
     }
     
-    /* 同事班表高亮 - 晚班 (柔和紫色) */
+    /* 同事班表高亮 - 晚班 (明亮紫色 - 兩種模式都清晰) */
     .colleague-night {
-        background-color: #4a148c !important;
-        border: 2px solid #ab47bc !important;
+        background: linear-gradient(135deg, #6a1b9a 0%, #ab47bc 100%) !important;
+        border: 3px solid #8e24aa !important;
+        box-shadow: inset 0 0 10px rgba(142, 36, 170, 0.4) !important;
+    }
+    
+    /* 時段指示器 - 早班 */
+    .slot-indicator-morning {
+        background-color: #fdd835 !important;
+        color: #000000 !important;
+        font-weight: bold !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-size: 12px !important;
+        display: inline-block !important;
+        margin-top: 4px !important;
+    }
+    
+    /* 時段指示器 - 中班 */
+    .slot-indicator-afternoon {
+        background-color: #ff7043 !important;
+        color: #ffffff !important;
+        font-weight: bold !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-size: 12px !important;
+        display: inline-block !important;
+        margin-top: 4px !important;
+    }
+    
+    /* 時段指示器 - 晚班 */
+    .slot-indicator-night {
+        background-color: #ab47bc !important;
+        color: #ffffff !important;
+        font-weight: bold !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-size: 12px !important;
+        display: inline-block !important;
+        margin-top: 4px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -392,24 +431,24 @@ else:
     
     /* 下拉選單 (Pull-down bar) - Selectbox - 配合牛奶綠背景 */
     [data-testid="stSelectbox"] { background-color: #ffffff !important; }
-    [data-testid="stSelectbox"] label { color: #2d3436 !important; }
-    [data-testid="stSelectbox"] .css-1dimb5e, [data-testid="stSelectbox"] .st-az { background-color: #ffffff !important; color: #2d3436 !important; border-color: #a5d6a7 !important; }
+    [data-testid="stSelectbox"] label { color: #2d3436 !important; font-weight: bold !important; }
+    [data-testid="stSelectbox"] .css-1dimb5e, [data-testid="stSelectbox"] .st-az { background-color: #ffffff !important; color: #2d3436 !important; border-color: #81c784 !important; }
     [data-testid="stSelectbox"] input { color: #2d3436 !important; background-color: #ffffff !important; }
-    [data-testid="stSelectbox"] .st-ak { background-color: #ffffff !important; border-color: #a5d6a7 !important; }
+    [data-testid="stSelectbox"] .st-ak { background-color: #ffffff !important; border-color: #81c784 !important; }
     
     /* 下拉選單選項列表 - 配合牛奶綠背景 */
     .st-ao, div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #c8e6c9 !important; }
     .st-ao li, div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #2d3436 !important; }
-    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #e8f5e9 !important; color: #2e7d32 !important; }
+    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #a5d6a7 !important; color: #1b5e20 !important; }
     
     /* 多選選單 (Multiselect) - 配合牛奶綠背景 */
     [data-testid="stMultiSelect"] { background-color: #ffffff !important; }
     [data-testid="stMultiSelect"] label { color: #2d3436 !important; }
-    [data-testid="stMultiSelect"] .css-1dimb5e, [data-testid="stMultiSelect"] .st-az { background-color: #ffffff !important; color: #2d3436 !important; border-color: #a5d6a7 !important; }
+    [data-testid="stMultiSelect"] .css-1dimb5e, [data-testid="stMultiSelect"] .st-az { background-color: #ffffff !important; color: #2d3436 !important; border-color: #81c784 !important; }
     
     /* Radio buttons - 配合牛奶綠背景 */
     [data-testid="stRadio"] label { color: #2d3436 !important; }
-    [data-testid="stRadio"] .st-az { background-color: #ffffff !important; border-color: #a5d6a7 !important; }
+    [data-testid="stRadio"] .st-az { background-color: #ffffff !important; border-color: #81c784 !important; }
     
     /* Checkbox - 配合牛奶綠背景 */
     [data-testid="stCheckbox"] label { color: #2d3436 !important; }
@@ -417,22 +456,61 @@ else:
     /* 警告訊息 - 配合牛奶綠背景 */
     .stAlert { background-color: #f1f8e9 !important; color: #2d3436 !important; border: 1px solid #c8e6c9 !important; }
     
-    /* 同事班表高亮 - 早班 (鵝黃色) */
+    /* 同事班表高亮 - 早班 (明亮黃色 - 兩種模式都清晰) */
     .colleague-morning {
-        background-color: #fff59d !important;
-        border: 2px solid #f9a825 !important;
+        background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%) !important;
+        border: 3px solid #f9a825 !important;
+        box-shadow: inset 0 0 10px rgba(249, 168, 37, 0.3) !important;
     }
     
-    /* 同事班表高亮 - 中班 (柔和橙色) */
+    /* 同事班表高亮 - 中班 (明亮橙色 - 兩種模式都清晰) */
     .colleague-afternoon {
-        background-color: #ffcc80 !important;
-        border: 2px solid #ef6c00 !important;
+        background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%) !important;
+        border: 3px solid #ef6c00 !important;
+        box-shadow: inset 0 0 10px rgba(239, 108, 0, 0.3) !important;
     }
     
-    /* 同事班表高亮 - 晚班 (柔和紫色) */
+    /* 同事班表高亮 - 晚班 (明亮紫色 - 兩種模式都清晰) */
     .colleague-night {
-        background-color: #ce93d8 !important;
-        border: 2px solid #7b1fa2 !important;
+        background: linear-gradient(135deg, #e1bee7 0%, #ce93d8 100%) !important;
+        border: 3px solid #7b1fa2 !important;
+        box-shadow: inset 0 0 10px rgba(123, 31, 162, 0.3) !important;
+    }
+    
+    /* 時段指示器 - 早班 */
+    .slot-indicator-morning {
+        background-color: #fdd835 !important;
+        color: #000000 !important;
+        font-weight: bold !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-size: 12px !important;
+        display: inline-block !important;
+        margin-top: 4px !important;
+    }
+    
+    /* 時段指示器 - 中班 */
+    .slot-indicator-afternoon {
+        background-color: #ff7043 !important;
+        color: #ffffff !important;
+        font-weight: bold !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-size: 12px !important;
+        display: inline-block !important;
+        margin-top: 4px !important;
+    }
+    
+    /* 時段指示器 - 晚班 */
+    .slot-indicator-night {
+        background-color: #ab47bc !important;
+        color: #ffffff !important;
+        font-weight: bold !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-size: 12px !important;
+        display: inline-block !important;
+        margin-top: 4px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -581,15 +659,8 @@ def admin_view():
         calendar.setfirstweekday(calendar.SUNDAY)  # 設定星期日為第一天
         cal = calendar.monthcalendar(sel_year, sel_month)
         
-        # 同事篩選下拉選單 (移到日曆之前定義)
-        colleague_filter = "全部同事"  # 預設值
-        if not df_filtered.empty:
-            all_colleagues = sorted(df_filtered['username'].unique().tolist())
-            colleague_filter = st.selectbox(
-                "👥 篩選同事",
-                ["全部同事"] + all_colleagues,
-                key="colleague_filter_sel"
-            )
+        # 同事篩選下拉選單 - 預設值 (在面板外定義)
+        colleague_filter = "全部同事"
         
         # 使用兩欄佈局：左側日曆 (80%)，右側申請面板 (20%)
         cal_col, panel_col = st.columns([80, 20], gap="small")
@@ -617,6 +688,7 @@ def admin_view():
                             
                             # 檢查選中同事在該日期的班表
                             colleague_highlight_class = ""
+                            slot_indicators_html = ""
                             if colleague_filter != "全部同事" and not df_filtered.empty:
                                 colleague_day_data = df_filtered[
                                     (df_filtered['shift_date'] == date_str) & 
@@ -629,13 +701,16 @@ def admin_view():
                                         slots = row['slots'] if isinstance(row['slots'], list) else [row['slots']]
                                         slots_list.extend(slots)
                                     
-                                    # 根據時段設定高亮類別
+                                    # 根據時段設定高亮類別和指示器
                                     if "早班" in slots_list:
                                         colleague_highlight_class = "colleague-morning"
-                                    elif "中班" in slots_list:
+                                        slot_indicators_html += '<span class="slot-indicator-morning">早</span>'
+                                    if "中班" in slots_list:
                                         colleague_highlight_class = "colleague-afternoon"
-                                    elif "晚班" in slots_list:
+                                        slot_indicators_html += '<span class="slot-indicator-afternoon">中</span>'
+                                    if "晚班" in slots_list:
                                         colleague_highlight_class = "colleague-night"
+                                        slot_indicators_html += '<span class="slot-indicator-night">晚</span>'
                             
                             # 建立日曆格子內容
                             cell_html = f'<div class="calendar-day-cell {colleague_highlight_class}">'
@@ -647,6 +722,10 @@ def admin_view():
                             holiday_name = get_holiday_name(date_str)
                             if holiday_name:
                                 cell_html += f'<div class="holiday-badge">🎉 {holiday_name}</div>'
+                            
+                            # 時段指示器 (當選擇同事時顯示)
+                            if slot_indicators_html:
+                                cell_html += f'<div style="margin-top: 4px;">{slot_indicators_html}</div>'
                             
                             cell_html += f'</div>'  # end header
                             
@@ -685,26 +764,35 @@ def admin_view():
         with panel_col:
             st.markdown('<div class="application-panel">', unsafe_allow_html=True)
             
-            # 接受該同事所有申請按鈕
-            if colleague_filter != "全部同事":
-                colleague_pending = df_filtered[
-                    (df_filtered['username'] == colleague_filter) & 
-                    (df_filtered['status'] == 'Pending')
-                ]
-                if not colleague_pending.empty:
-                    if st.button(
-                        f"✅ 接受 {colleague_filter} 所有申請",
-                        use_container_width=True,
-                        key=f"accept_all_{colleague_filter}",
-                        type="primary"
-                    ):
-                        for _, row in colleague_pending.iterrows():
-                            db.update_shift_status(row['id'], "Accepted")
-                        st.cache_data.clear()
-                        st.success(f"✅ 已接受 {colleague_filter} 的 {len(colleague_pending)} 個申請")
-                        st.rerun()
-            
-            st.divider()
+            # 同事篩選下拉選單 (移至右側面板頂部)
+            if not df_filtered.empty:
+                all_colleagues = sorted(df_filtered['username'].unique().tolist())
+                colleague_filter = st.selectbox(
+                    "👥 篩選同事",
+                    ["全部同事"] + all_colleagues,
+                    key="colleague_filter_sel"
+                )
+                
+                # 接受該同事所有申請按鈕
+                if colleague_filter != "全部同事":
+                    colleague_pending = df_filtered[
+                        (df_filtered['username'] == colleague_filter) & 
+                        (df_filtered['status'] == 'Pending')
+                    ]
+                    if not colleague_pending.empty:
+                        if st.button(
+                            f"✅ 接受 {colleague_filter} 所有申請",
+                            use_container_width=True,
+                            key=f"accept_all_{colleague_filter}",
+                            type="primary"
+                        ):
+                            for _, row in colleague_pending.iterrows():
+                                db.update_shift_status(row['id'], "Accepted")
+                            st.cache_data.clear()
+                            st.success(f"✅ 已接受 {colleague_filter} 的 {len(colleague_pending)} 個申請")
+                            st.rerun()
+                
+                st.divider()
             
             if 'selected_date' in st.session_state:
                 st.subheader(f"📅 {st.session_state.selected_date} 申請")
