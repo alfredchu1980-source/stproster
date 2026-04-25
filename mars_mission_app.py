@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.7.0",
+    "VERSION": "3.8.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -250,42 +250,60 @@ if eye_protection_mode:
     
     /* 警告訊息 */
     .stAlert { background-color: #262c33 !important; color: #c9d1d9 !important; border: 1px solid #444c56 !important; }
+    
+    /* 同事班表高亮 - 早班 (柔和黃色) */
+    .colleague-morning {
+        background-color: #424200 !important;
+        border: 2px solid #fdd835 !important;
+    }
+    
+    /* 同事班表高亮 - 中班 (柔和橙色) */
+    .colleague-afternoon {
+        background-color: #4e342e !important;
+        border: 2px solid #ff7043 !important;
+    }
+    
+    /* 同事班表高亮 - 晚班 (柔和紫色) */
+    .colleague-night {
+        background-color: #4a148c !important;
+        border: 2px solid #ab47bc !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 else:
-    # ============ 標準模式（淺色柔和主題）============
+    # ============ 標準模式（牛奶綠柔和主題）============
     st.markdown("""
     <style>
-    /* 全局背景與文字 */
-    html, body, [data-testid="stAppViewContainer"] { font-size: 20px !important; background-color: #f0f4f8 !important; color: #374151 !important; }
-    h1, h2, h3, h4, h5, h6, p, span, div, label, a { color: #374151 !important; }
-    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p { color: #374151 !important; }
+    /* 全局背景與文字 - 牛奶綠背景 */
+    html, body, [data-testid="stAppViewContainer"] { font-size: 20px !important; background-color: #f0f8f0 !important; color: #2d3436 !important; }
+    h1, h2, h3, h4, h5, h6, p, span, div, label, a { color: #2d3436 !important; }
+    [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p { color: #2d3436 !important; }
     
-    /* 所有按鈕 - 包括登入按鈕 */
+    /* 所有按鈕 - 包括登入按鈕 - 配合牛奶綠背景 */
     .stButton>button, button[kind="primary"], button[kind="secondary"], button[kind="tertiary"], input[type="submit"] { 
-        background-color: #60a5fa !important; 
+        background-color: #7cb342 !important; 
         color: #ffffff !important; 
-        border: 1px solid #60a5fa !important; 
+        border: 1px solid #7cb342 !important; 
         font-weight: bold !important;
     }
     .stButton>button:hover, button[kind="primary"]:hover, button[kind="secondary"]:hover, input[type="submit"]:hover { 
-        background-color: #3b82f6 !important; 
+        background-color: #689f38 !important; 
         color: #ffffff !important; 
-        border-color: #2563eb !important; 
+        border-color: #558b2f !important; 
     }
     
-    /* 卡片 */
-    .report-card, .applicant-box { background-color: #ffffff !important; border: 1px solid #e5e7eb !important; color: #374151 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; }
-    .role-header { color: #2563eb !important; background-color: #eff6ff !important; border-left: 5px solid #2563eb !important; }
+    /* 卡片 - 配合牛奶綠背景 */
+    .report-card, .applicant-box { background-color: #ffffff !important; border: 1px solid #c8e6c9 !important; color: #2d3436 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; }
+    .role-header { color: #2e7d32 !important; background-color: #e8f5e9 !important; border-left: 5px solid #4caf50 !important; }
     
-    /* 時段 */
-    .slot-y { background-color: #fef3c7 !important; color: #92400e !important; }
-    .slot-b { background-color: #dbeafe !important; color: #1e40af !important; }
-    .slot-g { background-color: #d1fae5 !important; color: #047857 !important; }
+    /* 時段 - 護眼配色 */
+    .slot-y { background-color: #fff9c4 !important; color: #f57f17 !important; }
+    .slot-b { background-color: #ffe0b2 !important; color: #e65100 !important; }
+    .slot-g { background-color: #c8e6c9 !important; color: #1b5e20 !important; }
     
     /* 假期標示 - 必須在日曆格子內部 */
     .holiday-badge { 
-        background-color: #dc3545 !important; 
+        background-color: #ef5350 !important; 
         color: #ffffff !important; 
         padding: 3px 8px !important; 
         border-radius: 4px !important; 
@@ -301,7 +319,7 @@ else:
     
     /* 日曆格線 - 標準模式 */
     .calendar-day-cell { 
-        border: 1px solid #d1d5db !important; 
+        border: 1px solid #a5d6a7 !important; 
         background-color: #ffffff !important; 
         padding: 0 !important;
         min-height: 180px !important;
@@ -313,16 +331,16 @@ else:
     
     /* 日曆格子上層：日期 + 假期 */
     .calendar-cell-header {
-        border-bottom: 1px solid #d1d5db !important;
+        border-bottom: 1px solid #a5d6a7 !important;
         padding: 8px !important;
-        background-color: #f3f4f6 !important;
+        background-color: #e8f5e9 !important;
         text-align: center !important;
     }
     
     .calendar-date {
         font-size: 24px !important;
         font-weight: bold !important;
-        color: #374151 !important;
+        color: #2d3436 !important;
     }
     
     /* 日曆格子中層：時段統計 */
@@ -337,21 +355,21 @@ else:
         font-size: 14px !important;
         font-weight: bold !important;
         text-align: center !important;
-        border-top: 1px solid #d1d5db !important;
+        border-top: 1px solid #a5d6a7 !important;
     }
     
     .calendar-cell-status.pending {
-        background-color: #dc3545 !important;
+        background-color: #ef5350 !important;
         color: #ffffff !important;
     }
     
     .calendar-cell-status.processed {
-        background-color: #28a745 !important;
+        background-color: #66bb6a !important;
         color: #ffffff !important;
     }
     .calendar-header-cell {
-        border: 1px solid #d1d5db !important;
-        background-color: #f3f4f6 !important;
+        border: 1px solid #a5d6a7 !important;
+        background-color: #e8f5e9 !important;
         padding: 8px !important;
         text-align: center !important;
         border-radius: 4px !important;
@@ -360,7 +378,7 @@ else:
     /* 申請面板 - 標準模式 */
     .application-panel {
         background-color: #ffffff !important;
-        border: 1px solid #e5e7eb !important;
+        border: 1px solid #c8e6c9 !important;
         border-radius: 8px !important;
         padding: 15px !important;
         max-height: 80vh !important;
@@ -368,36 +386,54 @@ else:
         box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
     
-    /* 輸入框 */
-    [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #374151 !important; background-color: #ffffff !important; border-color: #d1d5db !important; }
-    [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #374151 !important; }
+    /* 輸入框 - 配合牛奶綠背景 */
+    [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #2d3436 !important; background-color: #ffffff !important; border-color: #a5d6a7 !important; }
+    [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #2d3436 !important; }
     
-    /* 下拉選單 (Pull-down bar) - Selectbox */
+    /* 下拉選單 (Pull-down bar) - Selectbox - 配合牛奶綠背景 */
     [data-testid="stSelectbox"] { background-color: #ffffff !important; }
-    [data-testid="stSelectbox"] label { color: #374151 !important; }
-    [data-testid="stSelectbox"] .css-1dimb5e, [data-testid="stSelectbox"] .st-az { background-color: #ffffff !important; color: #374151 !important; border-color: #d1d5db !important; }
-    [data-testid="stSelectbox"] input { color: #374151 !important; background-color: #ffffff !important; }
-    [data-testid="stSelectbox"] .st-ak { background-color: #ffffff !important; border-color: #d1d5db !important; }
+    [data-testid="stSelectbox"] label { color: #2d3436 !important; }
+    [data-testid="stSelectbox"] .css-1dimb5e, [data-testid="stSelectbox"] .st-az { background-color: #ffffff !important; color: #2d3436 !important; border-color: #a5d6a7 !important; }
+    [data-testid="stSelectbox"] input { color: #2d3436 !important; background-color: #ffffff !important; }
+    [data-testid="stSelectbox"] .st-ak { background-color: #ffffff !important; border-color: #a5d6a7 !important; }
     
-    /* 下拉選單選項列表 */
-    .st-ao, div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #e5e7eb !important; }
-    .st-ao li, div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #374151 !important; }
-    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #f3f4f6 !important; color: #2563eb !important; }
+    /* 下拉選單選項列表 - 配合牛奶綠背景 */
+    .st-ao, div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #c8e6c9 !important; }
+    .st-ao li, div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #2d3436 !important; }
+    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #e8f5e9 !important; color: #2e7d32 !important; }
     
-    /* 多選選單 (Multiselect) */
+    /* 多選選單 (Multiselect) - 配合牛奶綠背景 */
     [data-testid="stMultiSelect"] { background-color: #ffffff !important; }
-    [data-testid="stMultiSelect"] label { color: #374151 !important; }
-    [data-testid="stMultiSelect"] .css-1dimb5e, [data-testid="stMultiSelect"] .st-az { background-color: #ffffff !important; color: #374151 !important; border-color: #d1d5db !important; }
+    [data-testid="stMultiSelect"] label { color: #2d3436 !important; }
+    [data-testid="stMultiSelect"] .css-1dimb5e, [data-testid="stMultiSelect"] .st-az { background-color: #ffffff !important; color: #2d3436 !important; border-color: #a5d6a7 !important; }
     
-    /* Radio buttons */
-    [data-testid="stRadio"] label { color: #374151 !important; }
-    [data-testid="stRadio"] .st-az { background-color: #ffffff !important; border-color: #d1d5db !important; }
+    /* Radio buttons - 配合牛奶綠背景 */
+    [data-testid="stRadio"] label { color: #2d3436 !important; }
+    [data-testid="stRadio"] .st-az { background-color: #ffffff !important; border-color: #a5d6a7 !important; }
     
-    /* Checkbox */
-    [data-testid="stCheckbox"] label { color: #374151 !important; }
+    /* Checkbox - 配合牛奶綠背景 */
+    [data-testid="stCheckbox"] label { color: #2d3436 !important; }
     
-    /* 警告訊息 */
-    .stAlert { background-color: #f9fafb !important; color: #374151 !important; border: 1px solid #e5e7eb !important; }
+    /* 警告訊息 - 配合牛奶綠背景 */
+    .stAlert { background-color: #f1f8e9 !important; color: #2d3436 !important; border: 1px solid #c8e6c9 !important; }
+    
+    /* 同事班表高亮 - 早班 (鵝黃色) */
+    .colleague-morning {
+        background-color: #fff59d !important;
+        border: 2px solid #f9a825 !important;
+    }
+    
+    /* 同事班表高亮 - 中班 (柔和橙色) */
+    .colleague-afternoon {
+        background-color: #ffcc80 !important;
+        border: 2px solid #ef6c00 !important;
+    }
+    
+    /* 同事班表高亮 - 晚班 (柔和紫色) */
+    .colleague-night {
+        background-color: #ce93d8 !important;
+        border: 2px solid #7b1fa2 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -569,8 +605,30 @@ def admin_view():
                                 day_data = df_filtered[df_filtered['shift_date'] == date_str]
                                 has_pending = not day_data.empty and any(day_data['status'] == 'Pending')
                             
+                            # 檢查選中同事在該日期的班表
+                            colleague_highlight_class = ""
+                            if colleague_filter != "全部同事" and not df_filtered.empty:
+                                colleague_day_data = df_filtered[
+                                    (df_filtered['shift_date'] == date_str) & 
+                                    (df_filtered['username'] == colleague_filter)
+                                ]
+                                if not colleague_day_data.empty:
+                                    # 檢查該同事在該日期的時段
+                                    slots_list = []
+                                    for _, row in colleague_day_data.iterrows():
+                                        slots = row['slots'] if isinstance(row['slots'], list) else [row['slots']]
+                                        slots_list.extend(slots)
+                                    
+                                    # 根據時段設定高亮類別
+                                    if "早班" in slots_list:
+                                        colleague_highlight_class = "colleague-morning"
+                                    elif "中班" in slots_list:
+                                        colleague_highlight_class = "colleague-afternoon"
+                                    elif "晚班" in slots_list:
+                                        colleague_highlight_class = "colleague-night"
+                            
                             # 建立日曆格子內容
-                            cell_html = f'<div class="calendar-day-cell">'
+                            cell_html = f'<div class="calendar-day-cell {colleague_highlight_class}">'
                             
                             # 上層：日期 + 假期 (固定位置)
                             cell_html += f'<div class="calendar-cell-header">'
