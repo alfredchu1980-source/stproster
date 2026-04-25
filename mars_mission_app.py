@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.5.0",
+    "VERSION": "3.6.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -142,11 +142,10 @@ if eye_protection_mode:
         color: #ffffff !important; 
         padding: 3px 8px !important; 
         border-radius: 4px !important; 
-        font-size: 14px !important; 
+        font-size: 13px !important; 
         font-weight: bold !important;
         display: block !important;
-        margin-top: 6px !important;
-        margin-bottom: 6px !important;
+        margin-top: 4px !important;
         text-align: center !important;
         white-space: nowrap !important;
         overflow: hidden !important;
@@ -157,10 +156,51 @@ if eye_protection_mode:
     .calendar-day-cell { 
         border: 1px solid #444c56 !important; 
         background-color: #22272e !important; 
-        padding: 10px !important;
+        padding: 0 !important;
         min-height: 180px !important;
         border-radius: 4px !important;
         box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* 日曆格子上層：日期 + 假期 */
+    .calendar-cell-header {
+        border-bottom: 1px solid #444c56 !important;
+        padding: 8px !important;
+        background-color: #262c33 !important;
+        text-align: center !important;
+    }
+    
+    .calendar-date {
+        font-size: 24px !important;
+        font-weight: bold !important;
+        color: #c9d1d9 !important;
+    }
+    
+    /* 日曆格子中層：時段統計 */
+    .calendar-cell-slots {
+        padding: 8px !important;
+        flex-grow: 1 !important;
+    }
+    
+    /* 日曆格子下層：審批狀態 */
+    .calendar-cell-status {
+        padding: 6px 8px !important;
+        font-size: 14px !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        border-top: 1px solid #444c56 !important;
+    }
+    
+    .calendar-cell-status.pending {
+        background-color: #d73a49 !important;
+        color: #ffffff !important;
+    }
+    
+    .calendar-cell-status.processed {
+        background-color: #28a745 !important;
+        color: #ffffff !important;
     }
     .calendar-header-cell {
         border: 1px solid #444c56 !important;
@@ -249,11 +289,10 @@ else:
         color: #ffffff !important; 
         padding: 3px 8px !important; 
         border-radius: 4px !important; 
-        font-size: 14px !important; 
+        font-size: 13px !important; 
         font-weight: bold !important;
         display: block !important;
-        margin-top: 6px !important;
-        margin-bottom: 6px !important;
+        margin-top: 4px !important;
         text-align: center !important;
         white-space: nowrap !important;
         overflow: hidden !important;
@@ -264,10 +303,51 @@ else:
     .calendar-day-cell { 
         border: 1px solid #d1d5db !important; 
         background-color: #ffffff !important; 
-        padding: 10px !important;
+        padding: 0 !important;
         min-height: 180px !important;
         border-radius: 4px !important;
         box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* 日曆格子上層：日期 + 假期 */
+    .calendar-cell-header {
+        border-bottom: 1px solid #d1d5db !important;
+        padding: 8px !important;
+        background-color: #f3f4f6 !important;
+        text-align: center !important;
+    }
+    
+    .calendar-date {
+        font-size: 24px !important;
+        font-weight: bold !important;
+        color: #374151 !important;
+    }
+    
+    /* 日曆格子中層：時段統計 */
+    .calendar-cell-slots {
+        padding: 8px !important;
+        flex-grow: 1 !important;
+    }
+    
+    /* 日曆格子下層：審批狀態 */
+    .calendar-cell-status {
+        padding: 6px 8px !important;
+        font-size: 14px !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        border-top: 1px solid #d1d5db !important;
+    }
+    
+    .calendar-cell-status.pending {
+        background-color: #dc3545 !important;
+        color: #ffffff !important;
+    }
+    
+    .calendar-cell-status.processed {
+        background-color: #28a745 !important;
+        color: #ffffff !important;
     }
     .calendar-header-cell {
         border: 1px solid #d1d5db !important;
@@ -481,39 +561,57 @@ def admin_view():
                         cols[i].write("")
                     else:
                         with cols[i]:
-                            st.markdown(f'<div class="calendar-day-cell">', unsafe_allow_html=True)
-                            
-                            # 日期數字
-                            st.markdown(f'<div style="font-size: 20px; font-weight: bold; margin-bottom: 4px;">{day}</div>', unsafe_allow_html=True)
                             date_str = f"{sel_year}-{sel_month:02d}-{day:02d}"
                             
-                            # 顯示假期標示 (必須在格子內部)
+                            # 檢查是否有待審批的申請 (Pending)
+                            has_pending = False
+                            if not df_filtered.empty:
+                                day_data = df_filtered[df_filtered['shift_date'] == date_str]
+                                has_pending = not day_data.empty and any(day_data['status'] == 'Pending')
+                            
+                            # 建立日曆格子內容
+                            cell_html = f'<div class="calendar-day-cell">'
+                            
+                            # 上層：日期 + 假期 (固定位置)
+                            cell_html += f'<div class="calendar-cell-header">'
+                            cell_html += f'<div class="calendar-date">{day}</div>'
+                            
                             holiday_name = get_holiday_name(date_str)
                             if holiday_name:
-                                st.markdown(f'<div class="holiday-badge">🎉 {holiday_name}</div>', unsafe_allow_html=True)
+                                cell_html += f'<div class="holiday-badge">🎉 {holiday_name}</div>'
                             
+                            cell_html += f'</div>'  # end header
+                            
+                            # 中層：時段統計
                             if not df_filtered.empty:
                                 day_data = df_filtered[df_filtered['shift_date'] == date_str]
                                 m_count = len(day_data[day_data['slots'].apply(lambda x: "早班" in x)])
                                 a_count = len(day_data[day_data['slots'].apply(lambda x: "中班" in x)])
                                 e_count = len(day_data[day_data['slots'].apply(lambda x: "晚班" in x)])
-                                if m_count > 0: st.markdown(f'<div class="slot-y">早：{m_count}</div>', unsafe_allow_html=True)
-                                if a_count > 0: st.markdown(f'<div class="slot-b">中：{a_count}</div>', unsafe_allow_html=True)
-                                if e_count > 0: st.markdown(f'<div class="slot-g">晚：{e_count}</div>', unsafe_allow_html=True)
                                 
-                                # 檢查是否有待審批的申請 (Pending)
-                                has_pending = not day_data.empty and any(day_data['status'] == 'Pending')
-                                
-                                if has_pending:
-                                    # 有待審批申請，顯示「查看」按鈕並標示
-                                    st.markdown(f'<div style="background-color: #d73a49; color: white; padding: 4px 8px; border-radius: 4px; font-size: 14px; font-weight: bold; text-align: center; margin-top: 8px;">⏳ 有待審批</div>', unsafe_allow_html=True)
-                                    if st.button("查看", key=f"btn_{date_str}", use_container_width=True):
-                                        st.session_state.selected_date = date_str
-                                elif not day_data.empty:
-                                    # 只有已處理的申請，顯示綠色標示
-                                    st.markdown(f'<div style="background-color: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 14px; font-weight: bold; text-align: center; margin-top: 8px;">✅ 已處理</div>', unsafe_allow_html=True)
+                                cell_html += f'<div class="calendar-cell-slots">'
+                                if m_count > 0:
+                                    cell_html += f'<div class="slot-y">早：{m_count}</div>'
+                                if a_count > 0:
+                                    cell_html += f'<div class="slot-b">中：{a_count}</div>'
+                                if e_count > 0:
+                                    cell_html += f'<div class="slot-g">晚：{e_count}</div>'
+                                cell_html += f'</div>'  # end slots
                             
-                            st.markdown('</div>', unsafe_allow_html=True)
+                            # 下層：審批狀態
+                            if has_pending:
+                                cell_html += f'<div class="calendar-cell-status pending">⏳ 有待審批</div>'
+                            elif not df_filtered.empty and not day_data.empty:
+                                cell_html += f'<div class="calendar-cell-status processed">✅ 已處理</div>'
+                            
+                            cell_html += f'</div>'  # end cell
+                            
+                            st.markdown(cell_html, unsafe_allow_html=True)
+                            
+                            # 查看按鈕 (只在有待審批時顯示)
+                            if has_pending:
+                                if st.button("查看", key=f"btn_{date_str}", use_container_width=True):
+                                    st.session_state.selected_date = date_str
         
         # ========== 右側：申請面板 ==========
         with panel_col:
