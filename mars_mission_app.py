@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.6.0",
+    "VERSION": "3.6.1",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -545,8 +545,8 @@ def admin_view():
         calendar.setfirstweekday(calendar.SUNDAY)  # 設定星期日為第一天
         cal = calendar.monthcalendar(sel_year, sel_month)
         
-        # 使用兩欄佈局：左側日曆 (75%)，右側申請面板 (25%)
-        cal_col, panel_col = st.columns([75, 25], gap="small")
+        # 使用兩欄佈局：左側日曆 (80%)，右側申請面板 (20%)
+        cal_col, panel_col = st.columns([80, 20], gap="small")
         
         # ========== 左側：日曆 ==========
         with cal_col:
