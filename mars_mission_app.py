@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.0",
+    "VERSION": "3.8.1",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -581,6 +581,16 @@ def admin_view():
         calendar.setfirstweekday(calendar.SUNDAY)  # 設定星期日為第一天
         cal = calendar.monthcalendar(sel_year, sel_month)
         
+        # 同事篩選下拉選單 (移到日曆之前定義)
+        colleague_filter = "全部同事"  # 預設值
+        if not df_filtered.empty:
+            all_colleagues = sorted(df_filtered['username'].unique().tolist())
+            colleague_filter = st.selectbox(
+                "👥 篩選同事",
+                ["全部同事"] + all_colleagues,
+                key="colleague_filter_sel"
+            )
+        
         # 使用兩欄佈局：左側日曆 (80%)，右側申請面板 (20%)
         cal_col, panel_col = st.columns([80, 20], gap="small")
         
@@ -675,35 +685,26 @@ def admin_view():
         with panel_col:
             st.markdown('<div class="application-panel">', unsafe_allow_html=True)
             
-            # 同事篩選下拉選單
-            if not df_filtered.empty:
-                all_colleagues = sorted(df_filtered['username'].unique().tolist())
-                colleague_filter = st.selectbox(
-                    "👥 篩選同事",
-                    ["全部同事"] + all_colleagues,
-                    key="colleague_filter_sel"
-                )
-                
-                # 接受該同事所有申請按鈕
-                if colleague_filter != "全部同事":
-                    colleague_pending = df_filtered[
-                        (df_filtered['username'] == colleague_filter) & 
-                        (df_filtered['status'] == 'Pending')
-                    ]
-                    if not colleague_pending.empty:
-                        if st.button(
-                            f"✅ 接受 {colleague_filter} 所有申請",
-                            use_container_width=True,
-                            key=f"accept_all_{colleague_filter}",
-                            type="primary"
-                        ):
-                            for _, row in colleague_pending.iterrows():
-                                db.update_shift_status(row['id'], "Accepted")
-                            st.cache_data.clear()
-                            st.success(f"✅ 已接受 {colleague_filter} 的 {len(colleague_pending)} 個申請")
-                            st.rerun()
-                
-                st.divider()
+            # 接受該同事所有申請按鈕
+            if colleague_filter != "全部同事":
+                colleague_pending = df_filtered[
+                    (df_filtered['username'] == colleague_filter) & 
+                    (df_filtered['status'] == 'Pending')
+                ]
+                if not colleague_pending.empty:
+                    if st.button(
+                        f"✅ 接受 {colleague_filter} 所有申請",
+                        use_container_width=True,
+                        key=f"accept_all_{colleague_filter}",
+                        type="primary"
+                    ):
+                        for _, row in colleague_pending.iterrows():
+                            db.update_shift_status(row['id'], "Accepted")
+                        st.cache_data.clear()
+                        st.success(f"✅ 已接受 {colleague_filter} 的 {len(colleague_pending)} 個申請")
+                        st.rerun()
+            
+            st.divider()
             
             if 'selected_date' in st.session_state:
                 st.subheader(f"📅 {st.session_state.selected_date} 申請")
