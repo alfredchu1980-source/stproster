@@ -397,6 +397,7 @@ def admin_view():
             sel_year, sel_month = date.today().year, date.today().month
 
         # 顯示日曆
+        calendar.setfirstweekday(calendar.SUNDAY)  # 設定星期日為第一天
         cal = calendar.monthcalendar(sel_year, sel_month)
         cols_week = st.columns(7)
         for i, day_name in enumerate(["日", "一", "二", "三", "四", "五", "六"]):
