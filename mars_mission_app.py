@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.3.1",
+    "VERSION": "3.4.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -148,6 +148,32 @@ if eye_protection_mode:
         margin-top: 4px !important;
     }
     
+    /* 日曆格線 - 護眼模式 */
+    .calendar-day-cell { 
+        border: 1px solid #444c56 !important; 
+        background-color: #22272e !important; 
+        padding: 8px !important;
+        min-height: 120px !important;
+        border-radius: 4px !important;
+    }
+    .calendar-header-cell {
+        border: 1px solid #444c56 !important;
+        background-color: #262c33 !important;
+        padding: 8px !important;
+        text-align: center !important;
+        border-radius: 4px !important;
+    }
+    
+    /* 申請面板 - 護眼模式 */
+    .application-panel {
+        background-color: #22272e !important;
+        border: 1px solid #444c56 !important;
+        border-radius: 8px !important;
+        padding: 15px !important;
+        max-height: 80vh !important;
+        overflow-y: auto !important;
+    }
+    
     /* 輸入框 */
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #c9d1d9 !important; background-color: #2d333b !important; border-color: #444c56 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #c9d1d9 !important; }
@@ -221,6 +247,33 @@ else:
         font-weight: bold !important;
         display: inline-block !important;
         margin-top: 4px !important;
+    }
+    
+    /* 日曆格線 - 標準模式 */
+    .calendar-day-cell { 
+        border: 1px solid #d1d5db !important; 
+        background-color: #ffffff !important; 
+        padding: 8px !important;
+        min-height: 120px !important;
+        border-radius: 4px !important;
+    }
+    .calendar-header-cell {
+        border: 1px solid #d1d5db !important;
+        background-color: #f3f4f6 !important;
+        padding: 8px !important;
+        text-align: center !important;
+        border-radius: 4px !important;
+    }
+    
+    /* 申請面板 - 標準模式 */
+    .application-panel {
+        background-color: #ffffff !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 8px !important;
+        padding: 15px !important;
+        max-height: 80vh !important;
+        overflow-y: auto !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
     }
     
     /* 輸入框 */
@@ -399,63 +452,101 @@ def admin_view():
         # 顯示日曆
         calendar.setfirstweekday(calendar.SUNDAY)  # 設定星期日為第一天
         cal = calendar.monthcalendar(sel_year, sel_month)
-        cols_week = st.columns(7)
-        for i, day_name in enumerate(["日", "一", "二", "三", "四", "五", "六"]):
-            cols_week[i].write(f"**{day_name}**")
+        
+        # 使用兩欄佈局：左側申請面板，右側日曆
+        cal_col, panel_col = st.columns([3, 2], gap="medium")
+        
+        # ========== 右側：日曆 ==========
+        with cal_col:
+            cols_week = st.columns(7)
+            for i, day_name in enumerate(["日", "一", "二", "三", "四", "五", "六"]):
+                cols_week[i].write(f"**{day_name}**")
             
-        for week in cal:
-            cols = st.columns(7)
-            for i, day in enumerate(week):
-                if day == 0:
-                    cols[i].write("")
-                else:
-                    with cols[i]:
-                        st.markdown(f"**{day}**")
-                        date_str = f"{sel_year}-{sel_month:02d}-{day:02d}"
-                        
-                        # 顯示假期標示
-                        holiday_name = get_holiday_name(date_str)
-                        if holiday_name:
-                            st.markdown(f'<div class="holiday-badge">🎉 {holiday_name}</div>', unsafe_allow_html=True)
-                        
-                        if not df_filtered.empty:
-                            day_data = df_filtered[df_filtered['shift_date'] == date_str]
-                            m_count = len(day_data[day_data['slots'].apply(lambda x: "早班" in x)])
-                            a_count = len(day_data[day_data['slots'].apply(lambda x: "中班" in x)])
-                            e_count = len(day_data[day_data['slots'].apply(lambda x: "晚班" in x)])
-                            if m_count > 0: st.markdown(f'<div class="slot-y">早：{m_count}</div>', unsafe_allow_html=True)
-                            if a_count > 0: st.markdown(f'<div class="slot-b">中：{a_count}</div>', unsafe_allow_html=True)
-                            if e_count > 0: st.markdown(f'<div class="slot-g">晚：{e_count}</div>', unsafe_allow_html=True)
-                            if not day_data.empty:
-                                if st.button("查看", key=f"btn_{date_str}"):
-                                    st.session_state.selected_date = date_str
-
-        if 'selected_date' in st.session_state:
-            st.divider()
-            st.subheader(f"📅 {st.session_state.selected_date} 申請名單")
-            day_data = df_filtered[df_filtered['shift_date'] == st.session_state.selected_date]
-            if not day_data.empty:
-                for slot in CONFIG["SLOTS"]:
-                    st.markdown(f"### --- **{slot}** ---")
-                    applicants = day_data[day_data['slots'].apply(lambda x: slot in x)]
-                    if not applicants.empty:
-                        roles_in_slot = sorted(applicants['role'].unique().tolist())
-                        for r_name in roles_in_slot:
-                            st.markdown(f'<div class="role-header">小組：{r_name}</div>', unsafe_allow_html=True)
-                            role_applicants = applicants[applicants['role'] == r_name]
-                            for _, row in role_applicants.iterrows():
-                                with st.container():
-                                    st.markdown(f'<div class="applicant-box">👤 <b>{row["username"]}</b> - 狀態：<i>{row["status"]}</i></div>', unsafe_allow_html=True)
-                                    if row['status'] == 'Pending':
-                                        c1, c2, _ = st.columns([1, 1, 2])
-                                        if c1.button("✅ 接受", key=f"acc_{row['id']}_{slot}_{r_name}"):
-                                            db.update_shift_status(row['id'], "Accepted")
-                                            st.rerun()
-                                        if c2.button("❌ 拒絕", key=f"rej_{row['id']}_{slot}_{r_name}"):
-                                            db.update_shift_status(row['id'], "Rejected")
-                                            st.rerun()
+            for week in cal:
+                cols = st.columns(7)
+                for i, day in enumerate(week):
+                    if day == 0:
+                        cols[i].write("")
                     else:
-                        st.write("無申請")
+                        with cols[i]:
+                            st.markdown(f'<div class="calendar-day-cell">', unsafe_allow_html=True)
+                            st.markdown(f"**{day}**")
+                            date_str = f"{sel_year}-{sel_month:02d}-{day:02d}"
+                            
+                            # 顯示假期標示
+                            holiday_name = get_holiday_name(date_str)
+                            if holiday_name:
+                                st.markdown(f'<div class="holiday-badge">🎉 {holiday_name}</div>', unsafe_allow_html=True)
+                            
+                            if not df_filtered.empty:
+                                day_data = df_filtered[df_filtered['shift_date'] == date_str]
+                                m_count = len(day_data[day_data['slots'].apply(lambda x: "早班" in x)])
+                                a_count = len(day_data[day_data['slots'].apply(lambda x: "中班" in x)])
+                                e_count = len(day_data[day_data['slots'].apply(lambda x: "晚班" in x)])
+                                if m_count > 0: st.markdown(f'<div class="slot-y">早：{m_count}</div>', unsafe_allow_html=True)
+                                if a_count > 0: st.markdown(f'<div class="slot-b">中：{a_count}</div>', unsafe_allow_html=True)
+                                if e_count > 0: st.markdown(f'<div class="slot-g">晚：{e_count}</div>', unsafe_allow_html=True)
+                                if not day_data.empty:
+                                    if st.button("查看", key=f"btn_{date_str}", use_container_width=True):
+                                        st.session_state.selected_date = date_str
+                            st.markdown('</div>', unsafe_allow_html=True)
+        
+        # ========== 左側：申請面板 ==========
+        with panel_col:
+            st.markdown('<div class="application-panel">', unsafe_allow_html=True)
+            
+            if 'selected_date' in st.session_state:
+                st.subheader(f"📅 {st.session_state.selected_date} 申請")
+                day_data = df_filtered[df_filtered['shift_date'] == st.session_state.selected_date]
+                
+                if not day_data.empty:
+                    has_pending = False
+                    
+                    for slot in CONFIG["SLOTS"]:
+                        applicants = day_data[day_data['slots'].apply(lambda x: slot in x)]
+                        if not applicants.empty:
+                            st.markdown(f"**⏰ {slot}**")
+                            st.divider()
+                            
+                            roles_in_slot = sorted(applicants['role'].unique().tolist())
+                            for r_name in roles_in_slot:
+                                st.markdown(f'<div class="role-header" style="font-size: 14px; padding: 5px;">小組：{r_name}</div>', unsafe_allow_html=True)
+                                role_applicants = applicants[applicants['role'] == r_name]
+                                
+                                for _, row in role_applicants.iterrows():
+                                    with st.container():
+                                        st.markdown(f'<div style="padding: 10px; margin: 5px 0; border-radius: 5px; background-color: {"#262c33" if eye_protection_mode else "#f3f4f6"};">', unsafe_allow_html=True)
+                                        st.markdown(f'👤 **{row["username"]}**')
+                                        
+                                        status_emoji = {"Pending": "⏳", "Accepted": "✅", "Cancelled": "❌", "Rejected": "🚫"}.get(row['status'], "•")
+                                        st.caption(f"{status_emoji} 狀態：{row['status']}")
+                                        
+                                        if row.get('remarks'):
+                                            st.caption(f"📝 備註：{row['remarks']}")
+                                        
+                                        if row['status'] == 'Pending':
+                                            has_pending = True
+                                            c1, c2 = st.columns(2)
+                                            if c1.button("✅ 接受", key=f"acc_{row['id']}_{slot}_{r_name}", use_container_width=True):
+                                                db.update_shift_status(row['id'], "Accepted")
+                                                st.cache_data.clear()
+                                                st.rerun()
+                                            if c2.button("❌ 拒絕", key=f"rej_{row['id']}_{slot}_{r_name}", use_container_width=True):
+                                                db.update_shift_status(row['id'], "Rejected")
+                                                st.cache_data.clear()
+                                                st.rerun()
+                                        
+                                        st.markdown('</div>', unsafe_allow_html=True)
+                                        st.divider()
+                    
+                    if not has_pending:
+                        st.info("✅ 該日所有申請已處理完畢")
+                else:
+                    st.info("📭 該日沒有申請")
+            else:
+                st.info("👈 請點擊日曆上的「查看」按鈕檢視申請")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
     with tab2:
         st.subheader("📊 報表導出中心")
