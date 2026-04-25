@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.6.1",
+    "VERSION": "3.7.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -617,9 +617,45 @@ def admin_view():
         with panel_col:
             st.markdown('<div class="application-panel">', unsafe_allow_html=True)
             
+            # 同事篩選下拉選單
+            if not df_filtered.empty:
+                all_colleagues = sorted(df_filtered['username'].unique().tolist())
+                colleague_filter = st.selectbox(
+                    "👥 篩選同事",
+                    ["全部同事"] + all_colleagues,
+                    key="colleague_filter_sel"
+                )
+                
+                # 接受該同事所有申請按鈕
+                if colleague_filter != "全部同事":
+                    colleague_pending = df_filtered[
+                        (df_filtered['username'] == colleague_filter) & 
+                        (df_filtered['status'] == 'Pending')
+                    ]
+                    if not colleague_pending.empty:
+                        if st.button(
+                            f"✅ 接受 {colleague_filter} 所有申請",
+                            use_container_width=True,
+                            key=f"accept_all_{colleague_filter}",
+                            type="primary"
+                        ):
+                            for _, row in colleague_pending.iterrows():
+                                db.update_shift_status(row['id'], "Accepted")
+                            st.cache_data.clear()
+                            st.success(f"✅ 已接受 {colleague_filter} 的 {len(colleague_pending)} 個申請")
+                            st.rerun()
+                
+                st.divider()
+            
             if 'selected_date' in st.session_state:
                 st.subheader(f"📅 {st.session_state.selected_date} 申請")
+                
+                # 獲取選中日期的資料
                 day_data = df_filtered[df_filtered['shift_date'] == st.session_state.selected_date]
+                
+                # 如果已選擇同事篩選，只顯示該同事的申請
+                if colleague_filter != "全部同事":
+                    day_data = day_data[day_data['username'] == colleague_filter]
                 
                 if not day_data.empty:
                     has_pending = False
@@ -1155,6 +1191,83 @@ def admin_view():
 
 def pt_view():
     st.title(f"Welcome / 歡迎 {st.session_state.username}，祝你有愉快的工作天！🚀")
+    
+    # 檢查申請審批結果通知
+    res_all = db.get_user_shifts(st.session_state.username)
+    if res_all.data:
+        # 檢查是否有已審批但用戶還未查看的申請
+        pending_notifications = [s for s in res_all.data if s.get('status') in ['Accepted', 'Rejected'] and s.get('notified', False) == False]
+        
+        if pending_notifications:
+            # 顯示彈出通知
+            st.markdown("""
+            <div id="notification-popup" style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                max-width: 500px;
+                animation: slideIn 0.5s ease-out;
+            ">
+            """, unsafe_allow_html=True)
+            
+            for notif in pending_notifications:
+                status = notif.get('status', '')
+                shift_date = notif.get('shift_date', '')
+                slots = notif.get('slots', [])
+                if isinstance(slots, list):
+                    slots_str = ", ".join(slots)
+                else:
+                    slots_str = str(slots)
+                
+                if status == 'Accepted':
+                    bg_color = "#28a745"
+                    icon = "✅"
+                    title = "申請已接受"
+                else:
+                    bg_color = "#dc3545"
+                    icon = "❌"
+                    title = "申請被拒絕"
+                
+                st.markdown(f"""
+                <div style="
+                    background-color: {bg_color};
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    margin-bottom: 10px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                ">
+                    <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">
+                        {icon} {title}
+                    </div>
+                    <div style="font-size: 14px;">
+                        📅 日期：{shift_date}<br>
+                        ⏰ 時段：{slots_str}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            # 添加動畫樣式
+            st.markdown("""
+            <style>
+            @keyframes slideIn {
+                from { transform: translateX(400px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
+            # 標記為已通知 (使用 session state)
+            if 'notified_shifts' not in st.session_state:
+                st.session_state.notified_shifts = []
+            for notif in pending_notifications:
+                if notif['id'] not in st.session_state.notified_shifts:
+                    st.session_state.notified_shifts.append(notif['id'])
+    
     deadline = db.get_system_settings()
     if deadline.get("enabled", True):
         st.info(f"📢 報更截止時間：每週 {deadline['day']} {deadline['time']}")
