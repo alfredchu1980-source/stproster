@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.4.0",
+    "VERSION": "3.5.0",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -136,25 +136,31 @@ if eye_protection_mode:
     .slot-b { background-color: #14233a !important; color: #539bf5 !important; }
     .slot-g { background-color: #162a1e !important; color: #57ab5a !important; }
     
-    /* 假期標示 */
+    /* 假期標示 - 必須在日曆格子內部 */
     .holiday-badge { 
         background-color: #d73a49 !important; 
         color: #ffffff !important; 
-        padding: 2px 6px !important; 
-        border-radius: 3px !important; 
-        font-size: 16px !important; 
+        padding: 3px 8px !important; 
+        border-radius: 4px !important; 
+        font-size: 14px !important; 
         font-weight: bold !important;
-        display: inline-block !important;
-        margin-top: 4px !important;
+        display: block !important;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     
     /* 日曆格線 - 護眼模式 */
     .calendar-day-cell { 
         border: 1px solid #444c56 !important; 
         background-color: #22272e !important; 
-        padding: 8px !important;
+        padding: 10px !important;
         min-height: 180px !important;
         border-radius: 4px !important;
+        box-sizing: border-box !important;
     }
     .calendar-header-cell {
         border: 1px solid #444c56 !important;
@@ -237,25 +243,31 @@ else:
     .slot-b { background-color: #dbeafe !important; color: #1e40af !important; }
     .slot-g { background-color: #d1fae5 !important; color: #047857 !important; }
     
-    /* 假期標示 */
+    /* 假期標示 - 必須在日曆格子內部 */
     .holiday-badge { 
         background-color: #dc3545 !important; 
         color: #ffffff !important; 
-        padding: 2px 6px !important; 
-        border-radius: 3px !important; 
-        font-size: 16px !important; 
+        padding: 3px 8px !important; 
+        border-radius: 4px !important; 
+        font-size: 14px !important; 
         font-weight: bold !important;
-        display: inline-block !important;
-        margin-top: 4px !important;
+        display: block !important;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     
     /* 日曆格線 - 標準模式 */
     .calendar-day-cell { 
         border: 1px solid #d1d5db !important; 
         background-color: #ffffff !important; 
-        padding: 8px !important;
+        padding: 10px !important;
         min-height: 180px !important;
         border-radius: 4px !important;
+        box-sizing: border-box !important;
     }
     .calendar-header-cell {
         border: 1px solid #d1d5db !important;
@@ -470,10 +482,12 @@ def admin_view():
                     else:
                         with cols[i]:
                             st.markdown(f'<div class="calendar-day-cell">', unsafe_allow_html=True)
-                            st.markdown(f"**{day}**")
+                            
+                            # 日期數字
+                            st.markdown(f'<div style="font-size: 20px; font-weight: bold; margin-bottom: 4px;">{day}</div>', unsafe_allow_html=True)
                             date_str = f"{sel_year}-{sel_month:02d}-{day:02d}"
                             
-                            # 顯示假期標示
+                            # 顯示假期標示 (必須在格子內部)
                             holiday_name = get_holiday_name(date_str)
                             if holiday_name:
                                 st.markdown(f'<div class="holiday-badge">🎉 {holiday_name}</div>', unsafe_allow_html=True)
@@ -486,9 +500,19 @@ def admin_view():
                                 if m_count > 0: st.markdown(f'<div class="slot-y">早：{m_count}</div>', unsafe_allow_html=True)
                                 if a_count > 0: st.markdown(f'<div class="slot-b">中：{a_count}</div>', unsafe_allow_html=True)
                                 if e_count > 0: st.markdown(f'<div class="slot-g">晚：{e_count}</div>', unsafe_allow_html=True)
-                                if not day_data.empty:
+                                
+                                # 檢查是否有待審批的申請 (Pending)
+                                has_pending = not day_data.empty and any(day_data['status'] == 'Pending')
+                                
+                                if has_pending:
+                                    # 有待審批申請，顯示「查看」按鈕並標示
+                                    st.markdown(f'<div style="background-color: #d73a49; color: white; padding: 4px 8px; border-radius: 4px; font-size: 14px; font-weight: bold; text-align: center; margin-top: 8px;">⏳ 有待審批</div>', unsafe_allow_html=True)
                                     if st.button("查看", key=f"btn_{date_str}", use_container_width=True):
                                         st.session_state.selected_date = date_str
+                                elif not day_data.empty:
+                                    # 只有已處理的申請，顯示綠色標示
+                                    st.markdown(f'<div style="background-color: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 14px; font-weight: bold; text-align: center; margin-top: 8px;">✅ 已處理</div>', unsafe_allow_html=True)
+                            
                             st.markdown('</div>', unsafe_allow_html=True)
         
         # ========== 右側：申請面板 ==========
@@ -1169,12 +1193,14 @@ def pt_view():
             for idx, row in df_pt.iterrows():
                 with st.container():
                     col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
-                    col1.markdown(f"**📅 {row['shift_date']}**")
                     
-                    # 顯示假期標示
+                    # 日期和假期標示在同一列
                     holiday_name = get_holiday_name(row['shift_date'])
                     if holiday_name:
-                        col1.markdown(f'<div class="holiday-badge">🎉 {holiday_name}</div>', unsafe_allow_html=True)
+                        col1.markdown(f"**📅 {row['shift_date']}**")
+                        col1.markdown(f'<div class="holiday-badge" style="display: inline-block; margin-top: 4px;">🎉 {holiday_name}</div>', unsafe_allow_html=True)
+                    else:
+                        col1.markdown(f"**📅 {row['shift_date']}**")
                     
                     col2.markdown(f"⏰ {row['slots_str']}")
                     
