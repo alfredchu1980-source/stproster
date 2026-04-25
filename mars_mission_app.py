@@ -110,7 +110,7 @@ if eye_protection_mode:
     st.markdown("""
     <style>
     /* 全局背景與文字 */
-    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #1e252b !important; color: #c9d1d9 !important; }
+    html, body, [data-testid="stAppViewContainer"] { font-size: 20px !important; background-color: #1e252b !important; color: #c9d1d9 !important; }
     h1, h2, h3, h4, h5, h6, p, span, div, label, a { color: #c9d1d9 !important; }
     [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p { color: #c9d1d9 !important; }
     
@@ -153,7 +153,7 @@ if eye_protection_mode:
         border: 1px solid #444c56 !important; 
         background-color: #22272e !important; 
         padding: 8px !important;
-        min-height: 120px !important;
+        min-height: 180px !important;
         border-radius: 4px !important;
     }
     .calendar-header-cell {
@@ -211,7 +211,7 @@ else:
     st.markdown("""
     <style>
     /* 全局背景與文字 */
-    html, body, [data-testid="stAppViewContainer"] { font-size: 22px !important; background-color: #f0f4f8 !important; color: #374151 !important; }
+    html, body, [data-testid="stAppViewContainer"] { font-size: 20px !important; background-color: #f0f4f8 !important; color: #374151 !important; }
     h1, h2, h3, h4, h5, h6, p, span, div, label, a { color: #374151 !important; }
     [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p { color: #374151 !important; }
     
@@ -254,7 +254,7 @@ else:
         border: 1px solid #d1d5db !important; 
         background-color: #ffffff !important; 
         padding: 8px !important;
-        min-height: 120px !important;
+        min-height: 180px !important;
         border-radius: 4px !important;
     }
     .calendar-header-cell {
@@ -453,10 +453,10 @@ def admin_view():
         calendar.setfirstweekday(calendar.SUNDAY)  # 設定星期日為第一天
         cal = calendar.monthcalendar(sel_year, sel_month)
         
-        # 使用兩欄佈局：左側申請面板，右側日曆
-        cal_col, panel_col = st.columns([3, 2], gap="medium")
+        # 使用兩欄佈局：左側日曆 (75%)，右側申請面板 (25%)
+        cal_col, panel_col = st.columns([75, 25], gap="small")
         
-        # ========== 右側：日曆 ==========
+        # ========== 左側：日曆 ==========
         with cal_col:
             cols_week = st.columns(7)
             for i, day_name in enumerate(["日", "一", "二", "三", "四", "五", "六"]):
@@ -491,7 +491,7 @@ def admin_view():
                                         st.session_state.selected_date = date_str
                             st.markdown('</div>', unsafe_allow_html=True)
         
-        # ========== 左側：申請面板 ==========
+        # ========== 右側：申請面板 ==========
         with panel_col:
             st.markdown('<div class="application-panel">', unsafe_allow_html=True)
             
