@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.2",
+    "VERSION": "3.8.3",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -253,59 +253,62 @@ if eye_protection_mode:
     
     /* 同事班表高亮 - 早班 (明亮黃色 - 兩種模式都清晰) */
     .colleague-morning {
-        background: linear-gradient(135deg, #9e9d24 0%, #fdd835 100%) !important;
-        border: 3px solid #fbc02d !important;
-        box-shadow: inset 0 0 10px rgba(251, 192, 45, 0.4) !important;
+        background: linear-gradient(135deg, #fff176 0%, #ffeb3b 100%) !important;
+        border: 4px solid #f57f17 !important;
+        box-shadow: 0 0 15px rgba(245, 127, 23, 0.5), inset 0 0 10px rgba(255, 241, 118, 0.5) !important;
     }
     
     /* 同事班表高亮 - 中班 (明亮橙色 - 兩種模式都清晰) */
     .colleague-afternoon {
-        background: linear-gradient(135deg, #e65100 0%, #ff7043 100%) !important;
-        border: 3px solid #f57c00 !important;
-        box-shadow: inset 0 0 10px rgba(245, 124, 0, 0.4) !important;
+        background: linear-gradient(135deg, #ffb74d 0%, #ffa726 100%) !important;
+        border: 4px solid #e65100 !important;
+        box-shadow: 0 0 15px rgba(230, 81, 0, 0.5), inset 0 0 10px rgba(255, 183, 77, 0.5) !important;
     }
     
     /* 同事班表高亮 - 晚班 (明亮紫色 - 兩種模式都清晰) */
     .colleague-night {
-        background: linear-gradient(135deg, #6a1b9a 0%, #ab47bc 100%) !important;
-        border: 3px solid #8e24aa !important;
-        box-shadow: inset 0 0 10px rgba(142, 36, 170, 0.4) !important;
+        background: linear-gradient(135deg, #ba68c8 0%, #ab47bc 100%) !important;
+        border: 4px solid #6a1b9a !important;
+        box-shadow: 0 0 15px rgba(106, 27, 154, 0.5), inset 0 0 10px rgba(186, 104, 200, 0.5) !important;
     }
     
     /* 時段指示器 - 早班 */
     .slot-indicator-morning {
         background-color: #fdd835 !important;
         color: #000000 !important;
-        font-weight: bold !important;
-        padding: 2px 6px !important;
-        border-radius: 3px !important;
-        font-size: 12px !important;
+        font-weight: 900 !important;
+        padding: 4px 10px !important;
+        border-radius: 4px !important;
+        font-size: 14px !important;
         display: inline-block !important;
-        margin-top: 4px !important;
+        margin: 2px !important;
+        border: 2px solid #f57f17 !important;
     }
     
     /* 時段指示器 - 中班 */
     .slot-indicator-afternoon {
         background-color: #ff7043 !important;
         color: #ffffff !important;
-        font-weight: bold !important;
-        padding: 2px 6px !important;
-        border-radius: 3px !important;
-        font-size: 12px !important;
+        font-weight: 900 !important;
+        padding: 4px 10px !important;
+        border-radius: 4px !important;
+        font-size: 14px !important;
         display: inline-block !important;
-        margin-top: 4px !important;
+        margin: 2px !important;
+        border: 2px solid #e65100 !important;
     }
     
     /* 時段指示器 - 晚班 */
     .slot-indicator-night {
         background-color: #ab47bc !important;
         color: #ffffff !important;
-        font-weight: bold !important;
-        padding: 2px 6px !important;
-        border-radius: 3px !important;
-        font-size: 12px !important;
+        font-weight: 900 !important;
+        padding: 4px 10px !important;
+        border-radius: 4px !important;
+        font-size: 14px !important;
         display: inline-block !important;
-        margin-top: 4px !important;
+        margin: 2px !important;
+        border: 2px solid #6a1b9a !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -458,59 +461,62 @@ else:
     
     /* 同事班表高亮 - 早班 (明亮黃色 - 兩種模式都清晰) */
     .colleague-morning {
-        background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%) !important;
-        border: 3px solid #f9a825 !important;
-        box-shadow: inset 0 0 10px rgba(249, 168, 37, 0.3) !important;
+        background: linear-gradient(135deg, #fff176 0%, #ffeb3b 100%) !important;
+        border: 4px solid #f57f17 !important;
+        box-shadow: 0 0 15px rgba(245, 127, 23, 0.5), inset 0 0 10px rgba(255, 241, 118, 0.5) !important;
     }
     
     /* 同事班表高亮 - 中班 (明亮橙色 - 兩種模式都清晰) */
     .colleague-afternoon {
-        background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%) !important;
-        border: 3px solid #ef6c00 !important;
-        box-shadow: inset 0 0 10px rgba(239, 108, 0, 0.3) !important;
+        background: linear-gradient(135deg, #ffb74d 0%, #ffa726 100%) !important;
+        border: 4px solid #e65100 !important;
+        box-shadow: 0 0 15px rgba(230, 81, 0, 0.5), inset 0 0 10px rgba(255, 183, 77, 0.5) !important;
     }
     
     /* 同事班表高亮 - 晚班 (明亮紫色 - 兩種模式都清晰) */
     .colleague-night {
-        background: linear-gradient(135deg, #e1bee7 0%, #ce93d8 100%) !important;
-        border: 3px solid #7b1fa2 !important;
-        box-shadow: inset 0 0 10px rgba(123, 31, 162, 0.3) !important;
+        background: linear-gradient(135deg, #ba68c8 0%, #ab47bc 100%) !important;
+        border: 4px solid #6a1b9a !important;
+        box-shadow: 0 0 15px rgba(106, 27, 154, 0.5), inset 0 0 10px rgba(186, 104, 200, 0.5) !important;
     }
     
     /* 時段指示器 - 早班 */
     .slot-indicator-morning {
         background-color: #fdd835 !important;
         color: #000000 !important;
-        font-weight: bold !important;
-        padding: 2px 6px !important;
-        border-radius: 3px !important;
-        font-size: 12px !important;
+        font-weight: 900 !important;
+        padding: 4px 10px !important;
+        border-radius: 4px !important;
+        font-size: 14px !important;
         display: inline-block !important;
-        margin-top: 4px !important;
+        margin: 2px !important;
+        border: 2px solid #f57f17 !important;
     }
     
     /* 時段指示器 - 中班 */
     .slot-indicator-afternoon {
         background-color: #ff7043 !important;
         color: #ffffff !important;
-        font-weight: bold !important;
-        padding: 2px 6px !important;
-        border-radius: 3px !important;
-        font-size: 12px !important;
+        font-weight: 900 !important;
+        padding: 4px 10px !important;
+        border-radius: 4px !important;
+        font-size: 14px !important;
         display: inline-block !important;
-        margin-top: 4px !important;
+        margin: 2px !important;
+        border: 2px solid #e65100 !important;
     }
     
     /* 時段指示器 - 晚班 */
     .slot-indicator-night {
         background-color: #ab47bc !important;
         color: #ffffff !important;
-        font-weight: bold !important;
-        padding: 2px 6px !important;
-        border-radius: 3px !important;
-        font-size: 12px !important;
+        font-weight: 900 !important;
+        padding: 4px 10px !important;
+        border-radius: 4px !important;
+        font-size: 14px !important;
         display: inline-block !important;
-        margin-top: 4px !important;
+        margin: 2px !important;
+        border: 2px solid #6a1b9a !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -696,21 +702,34 @@ def admin_view():
                                 ]
                                 if not colleague_day_data.empty:
                                     # 檢查該同事在該日期的時段
-                                    slots_list = []
+                                    has_morning = False
+                                    has_afternoon = False
+                                    has_night = False
+                                    
                                     for _, row in colleague_day_data.iterrows():
                                         slots = row['slots'] if isinstance(row['slots'], list) else [row['slots']]
-                                        slots_list.extend(slots)
+                                        if "早班" in slots:
+                                            has_morning = True
+                                        if "中班" in slots:
+                                            has_afternoon = True
+                                        if "晚班" in slots:
+                                            has_night = True
                                     
-                                    # 根據時段設定高亮類別和指示器
-                                    if "早班" in slots_list:
+                                    # 根據時段設定高亮類別 (優先順序：早 > 中 > 晚)
+                                    if has_morning:
                                         colleague_highlight_class = "colleague-morning"
-                                        slot_indicators_html += '<span class="slot-indicator-morning">早</span>'
-                                    if "中班" in slots_list:
+                                    elif has_afternoon:
                                         colleague_highlight_class = "colleague-afternoon"
-                                        slot_indicators_html += '<span class="slot-indicator-afternoon">中</span>'
-                                    if "晚班" in slots_list:
+                                    elif has_night:
                                         colleague_highlight_class = "colleague-night"
-                                        slot_indicators_html += '<span class="slot-indicator-night">晚</span>'
+                                    
+                                    # 建立時段指示器
+                                    if has_morning:
+                                        slot_indicators_html += '<span class="slot-indicator-morning">早</span> '
+                                    if has_afternoon:
+                                        slot_indicators_html += '<span class="slot-indicator-afternoon">中</span> '
+                                    if has_night:
+                                        slot_indicators_html += '<span class="slot-indicator-night">晚</span> '
                             
                             # 建立日曆格子內容
                             cell_html = f'<div class="calendar-day-cell {colleague_highlight_class}">'
