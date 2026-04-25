@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.4",
+    "VERSION": "3.8.5",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -432,22 +432,22 @@ else:
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #2d3436 !important; background-color: #ffffff !important; border-color: #a5d6a7 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #2d3436 !important; }
     
-    /* 下拉選單 (Pull-down bar) - Selectbox - 配合牛奶綠背景 */
+    /* 下拉選單 (Pull-down bar) - Selectbox - 強制白色背景黑色文字 */
     [data-testid="stSelectbox"] { background-color: #ffffff !important; }
-    [data-testid="stSelectbox"] label { color: #2d3436 !important; font-weight: bold !important; }
-    [data-testid="stSelectbox"] .css-1dimb5e, [data-testid="stSelectbox"] .st-az { background-color: #ffffff !important; color: #2d3436 !important; border-color: #81c784 !important; }
-    [data-testid="stSelectbox"] input { color: #2d3436 !important; background-color: #ffffff !important; }
-    [data-testid="stSelectbox"] .st-ak { background-color: #ffffff !important; border-color: #81c784 !important; }
+    [data-testid="stSelectbox"] label { color: #000000 !important; font-weight: bold !important; }
+    [data-testid="stSelectbox"] .css-1dimb5e, [data-testid="stSelectbox"] .st-az { background-color: #ffffff !important; color: #000000 !important; border-color: #000000 !important; }
+    [data-testid="stSelectbox"] input { color: #000000 !important; background-color: #ffffff !important; }
+    [data-testid="stSelectbox"] .st-ak { background-color: #ffffff !important; border-color: #000000 !important; }
     
-    /* 下拉選單選項列表 - 配合牛奶綠背景 */
-    .st-ao, div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #c8e6c9 !important; }
-    .st-ao li, div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #2d3436 !important; }
-    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #a5d6a7 !important; color: #1b5e20 !important; }
+    /* 下拉選單選項列表 - 強制白色背景黑色文字 */
+    .st-ao, div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #cccccc !important; }
+    .st-ao li, div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #000000 !important; }
+    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #dddddd !important; color: #000000 !important; }
     
-    /* 多選選單 (Multiselect) - 配合牛奶綠背景 */
+    /* 多選選單 (Multiselect) - 強制白色背景黑色文字 */
     [data-testid="stMultiSelect"] { background-color: #ffffff !important; }
-    [data-testid="stMultiSelect"] label { color: #2d3436 !important; }
-    [data-testid="stMultiSelect"] .css-1dimb5e, [data-testid="stMultiSelect"] .st-az { background-color: #ffffff !important; color: #2d3436 !important; border-color: #81c784 !important; }
+    [data-testid="stMultiSelect"] label { color: #000000 !important; }
+    [data-testid="stMultiSelect"] .css-1dimb5e, [data-testid="stMultiSelect"] .st-az { background-color: #ffffff !important; color: #000000 !important; border-color: #000000 !important; }
     
     /* Radio buttons - 配合牛奶綠背景 */
     [data-testid="stRadio"] label { color: #2d3436 !important; }
@@ -777,8 +777,8 @@ def admin_view():
                             
                             st.markdown(cell_html, unsafe_allow_html=True)
                             
-                            # 查看按鈕 (只在有待審批時顯示)
-                            if has_pending:
+                            # 查看按鈕 (只要有申請就顯示，包括已處理的)
+                            if not df_filtered.empty and not day_data.empty:
                                 if st.button("查看", key=f"btn_{date_str}", use_container_width=True):
                                     st.session_state.selected_date = date_str
         
