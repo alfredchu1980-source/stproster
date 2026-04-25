@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.3",
+    "VERSION": "3.8.4",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -665,8 +665,9 @@ def admin_view():
         calendar.setfirstweekday(calendar.SUNDAY)  # 設定星期日為第一天
         cal = calendar.monthcalendar(sel_year, sel_month)
         
-        # 同事篩選下拉選單 - 預設值 (在面板外定義)
-        colleague_filter = "全部同事"
+        # 同事篩選下拉選單 - 使用 session_state 確保在日曆渲染前已有值
+        if 'colleague_filter_sel' not in st.session_state:
+            st.session_state.colleague_filter_sel = "全部同事"
         
         # 使用兩欄佈局：左側日曆 (80%)，右側申請面板 (20%)
         cal_col, panel_col = st.columns([80, 20], gap="small")
@@ -692,13 +693,15 @@ def admin_view():
                                 day_data = df_filtered[df_filtered['shift_date'] == date_str]
                                 has_pending = not day_data.empty and any(day_data['status'] == 'Pending')
                             
-                            # 檢查選中同事在該日期的班表
+                            # 檢查選中同事在該日期的班表 - 使用 session_state 的值
                             colleague_highlight_class = ""
                             slot_indicators_html = ""
-                            if colleague_filter != "全部同事" and not df_filtered.empty:
+                            colleague_filter_value = st.session_state.colleague_filter_sel
+                            
+                            if colleague_filter_value != "全部同事" and not df_filtered.empty:
                                 colleague_day_data = df_filtered[
                                     (df_filtered['shift_date'] == date_str) & 
-                                    (df_filtered['username'] == colleague_filter)
+                                    (df_filtered['username'] == colleague_filter_value)
                                 ]
                                 if not colleague_day_data.empty:
                                     # 檢查該同事在該日期的時段
@@ -783,7 +786,7 @@ def admin_view():
         with panel_col:
             st.markdown('<div class="application-panel">', unsafe_allow_html=True)
             
-            # 同事篩選下拉選單 (移至右側面板頂部)
+            # 同事篩選下拉選單 (移至右側面板頂部) - 更新 session_state
             if not df_filtered.empty:
                 all_colleagues = sorted(df_filtered['username'].unique().tolist())
                 colleague_filter = st.selectbox(
