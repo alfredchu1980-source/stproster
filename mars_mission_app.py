@@ -104,7 +104,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.12",
+    "VERSION": "3.8.13",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -284,17 +284,14 @@ if eye_protection_mode:
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #c9d1d9 !important; background-color: #2d333b !important; border-color: #444c56 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #c9d1d9 !important; }
     
-    /* 🔒 保護所有標籤和標題不被下拉選單樣式影響 (但不影響下拉選單本身) */
+    /* 🔒 保護標籤和標題 (不影響下拉選單選項) */
     [data-testid="stSelectbox"] label, [data-testid="stMultiSelect"] label, [data-testid="stDateInput"] label { 
         background-color: transparent !important; 
         color: #c9d1d9 !important; 
     }
-    .stSubheader label, .stSubheader, .stMarkdown, .stInfo, .stAlert { 
+    .stSubheader label, .stSubheader { 
         background-color: transparent !important; 
         color: #c9d1d9 !important; 
-    }
-    h1, h2, h3, h4, h5, h6, p, span, div { 
-        background-color: transparent !important; 
     }
     
     /* 下拉選單 (Pull-down bar) - Selectbox - 護眼模式用深灰色背景 */
@@ -303,10 +300,13 @@ if eye_protection_mode:
     [data-testid="stSelectbox"] [data-baseweb="select"] svg { fill: #c9d1d9 !important; }
     [data-testid="stSelectbox"] label { color: #c9d1d9 !important; }
     
-    /* 下拉選單選項列表 - 護眼模式用深灰色背景 (強制不透明) */
-    .st-ao, div[data-baseweb="menu"] { background-color: #2d333b !important; border-color: #444c56 !important; }
-    .st-ao li, div[data-baseweb="menu"] li { background-color: #2d333b !important; color: #c9d1d9 !important; }
-    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #444c56 !important; color: #79c0ff !important; }
+    /* 下拉選單選項列表 - 護眼模式用深灰色背景 (最高優先級) */
+    div[data-baseweb="menu"] { background-color: #2d333b !important; border-color: #444c56 !important; }
+    div[data-baseweb="menu"] li { background-color: #2d333b !important; color: #c9d1d9 !important; }
+    div[data-baseweb="menu"] li:hover { background-color: #444c56 !important; color: #79c0ff !important; }
+    .st-ao { background-color: #2d333b !important; border-color: #444c56 !important; }
+    .st-ao li { background-color: #2d333b !important; color: #c9d1d9 !important; }
+    .st-ao li:hover { background-color: #444c56 !important; color: #79c0ff !important; }
     
     /* 多選選單 (Multiselect) - 護眼模式用深灰色背景 */
     [data-testid="stMultiSelect"] [data-baseweb="select"] { background-color: #30363d !important; }
@@ -510,17 +510,14 @@ else:
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #2d3436 !important; background-color: #ffffff !important; border-color: #a5d6a7 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #2d3436 !important; }
     
-    /* 🔒 保護所有標籤和標題不被下拉選單樣式影響 (但不影響下拉選單本身) */
+    /* 🔒 保護標籤和標題 (不影響下拉選單選項) */
     [data-testid="stSelectbox"] label, [data-testid="stMultiSelect"] label, [data-testid="stDateInput"] label { 
         background-color: transparent !important; 
         color: #2d3436 !important; 
     }
-    .stSubheader label, .stSubheader, .stMarkdown, .stInfo, .stAlert { 
+    .stSubheader label, .stSubheader { 
         background-color: transparent !important; 
         color: #2d3436 !important; 
-    }
-    h1, h2, h3, h4, h5, h6, p, span, div { 
-        background-color: transparent !important; 
     }
     
     /* 下拉選單 (Pull-down bar) - Selectbox - 只改變輸入框，不影響標籤 */
@@ -529,10 +526,13 @@ else:
     [data-testid="stSelectbox"] [data-baseweb="select"] svg { fill: #000000 !important; }
     [data-testid="stSelectbox"] label { color: #2d3436 !important; font-weight: bold !important; }
     
-    /* 下拉選單選項列表 - 強制不透明 */
-    .st-ao, div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #cccccc !important; }
-    .st-ao li, div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #000000 !important; }
-    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #dddddd !important; color: #000000 !important; }
+    /* 下拉選單選項列表 - 牛奶綠模式用白色背景 (最高優先級) */
+    div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #cccccc !important; }
+    div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #000000 !important; }
+    div[data-baseweb="menu"] li:hover { background-color: #dddddd !important; color: #000000 !important; }
+    .st-ao { background-color: #ffffff !important; border-color: #cccccc !important; }
+    .st-ao li { background-color: #ffffff !important; color: #000000 !important; }
+    .st-ao li:hover { background-color: #dddddd !important; color: #000000 !important; }
     
     /* 多選選單 (Multiselect) - 只改變輸入框，不影響標籤 */
     [data-testid="stMultiSelect"] [data-baseweb="select"] { background-color: #ffffff !important; }
@@ -1408,7 +1408,7 @@ def admin_view():
         with st.form("add_user_form"):
             new_username = st.text_input("用戶名稱 (Username)").strip().lower()
             new_password = st.text_input("密碼 (Password)", type="password")
-            new_role = st.selectbox("職能角色 (Role)", ["PT", "Picker", "Packer", "Admin"])
+            new_role = st.selectbox("職能角色 (Role)", ["PT", "FT", "Picker", "Packer", "Admin"])
             
             if st.form_submit_button("新增使用者"):
                 if not new_username or not new_password:
@@ -1807,11 +1807,388 @@ def pt_view():
     with tab3:
         change_password_ui()
 
+
+
+def ft_view():
+    """全職員工請假管理視圖"""
+    st.title(f"👔 全職員工：{st.session_state.username} - 請假管理系統")
+    
+    # 創建分頁
+    ft_tab1, ft_tab2, ft_tab3 = st.tabs(["✍️ 申請請假", "📊 假期餘額", "📜 請假紀錄"])
+    
+    # ==========================================
+    # Tab 1: 申請請假
+    # ==========================================
+    with ft_tab1:
+        st.markdown("#### ✍️ 申請請假")
+        st.markdown("Apply for Leave")
+        
+        al_balance = db.get_ft_annual_leave_balance(st.session_state.username, 2026)
+        cl_balance = db.get_ft_compensation_balance(st.session_state.username)
+        
+        with st.form("ft_leave_application"):
+            leave_type = st.selectbox(
+                "請假類型 / Leave Type",
+                options=["SL", "AL", "CL", "RD"],
+                format_func=lambda x: db.FT_LEAVE_TYPES.get(x, x)
+            )
+            
+            if leave_type == "SL":
+                st.info("📋 病假 (Sick Leave): 請假後請盡快將醫生紙提交至人力資源部 (HRD)")
+                st.warning("⚠️ 根據香港勞工條例，病假將按公式計算，目前系統仅作記錄用途。")
+            elif leave_type == "AL":
+                st.success(f"📊 大假餘額：{al_balance['remaining']} / {al_balance['total_entitled']} 天")
+                if al_balance['remaining'] <= 0:
+                    st.error("⚠️ 大假餘額已用完")
+            elif leave_type == "CL":
+                st.success(f"📊 補假餘額：{cl_balance['remaining']} 天")
+                if cl_balance['remaining'] > 0:
+                    st.markdown("**可用補假日期 (FIFO - 最早日期優先):**")
+                    for i, avail_date in enumerate(cl_balance['available_dates'][:5]):
+                        st.markdown(f"- {avail_date['work_date']} ({avail_date['holiday_name']})")
+                if cl_balance['remaining'] <= 0:
+                    st.error("⚠️ 沒有可用的補假")
+            elif leave_type == "RD":
+                # 獲取例假餘額
+                leave_dt = date.today()
+                rd_balance = db.get_ft_rest_day_balance(st.session_state.username, leave_dt.year, leave_dt.month)
+                st.success(f"📊 例假餘額：{rd_balance['remaining']} 天")
+                st.info(f"ℹ️ 當月應有：{rd_balance['base_entitled']} 天 | 結轉：{rd_balance['carried_forward']} 天 | 已使用：{rd_balance['used']} 天")
+                st.markdown("**📋 例假規則：**")
+                st.markdown("- 每月固定 6 天例假")
+                st.markdown("- 可結轉下月（最多 6 天）")
+                st.markdown("- 每月最多申請 6 天")
+            
+            leave_date = st.date_input(
+                "請假日期 / Leave Date",
+                min_value=date.today(),
+                max_value=date(date.today().year, 12, 31),
+                value=date.today()
+            )
+            
+            leave_days = st.number_input(
+                "請假天數 / Leave Days",
+                min_value=1,
+                max_value=14,
+                value=1
+            )
+            
+            compensation_work_date = None
+            if leave_type == "CL" and cl_balance['remaining'] > 0:
+                available_dates = [(d['work_date'], f"{d['work_date']} ({d['holiday_name']})") 
+                                  for d in cl_balance['available_dates']]
+                if available_dates:
+                    compensation_work_date = st.selectbox(
+                        "選擇補假對應的工作日期 / Select Compensation Work Date",
+                        options=[d[0] for d in available_dates],
+                        format_func=lambda x: next((d[1] for d in available_dates if d[0] == x), x)
+                    )
+            
+            remarks = st.text_area(
+                "備註 / Remarks",
+                placeholder="可選填，例如：醫生預約、家庭事務等",
+                max_chars=500
+            )
+            
+            submitted = st.form_submit_button("提交申請 / Submit Application", use_container_width=True)
+            
+            if submitted:
+                leave_date_str = leave_date.strftime("%Y-%m-%d")
+                result = db.submit_ft_leave_application(
+                    username=st.session_state.username,
+                    leave_type=leave_type,
+                    leave_date=leave_date_str,
+                    leave_days=leave_days,
+                    remarks=remarks,
+                    compensation_work_date=compensation_work_date
+                )
+                
+                if result["success"]:
+                    st.success(f"✅ {result['message']}")
+                    if leave_type == "SL":
+                        st.warning("📋 請記住：請假後請盡快將醫生紙提交至人力資源部 (HRD)")
+                else:
+                    st.error(f"❌ {result['message']}")
+    
+    # ==========================================
+    # Tab 2: 假期餘額
+    # ==========================================
+    with ft_tab2:
+        st.markdown("#### 📊 假期餘額查詢")
+        st.markdown("Leave Balance Inquiry")
+        
+        st.markdown("##### 🏖️ 大假 (Annual Leave)")
+        al_balance = db.get_ft_annual_leave_balance(st.session_state.username, 2026)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("年度總額 / Total", f"{al_balance['total_entitled']} 天")
+        with col2:
+            st.metric("已使用 / Used", f"{al_balance['used']} 天")
+        with col3:
+            st.metric("剩餘 / Remaining", f"{al_balance['remaining']} 天")
+        
+        st.markdown(f"*統計期間：2026-01-01 至 2026-12-31*")
+        
+        st.markdown("---")
+        st.markdown("##### 📅 補假 (Compensation Leave)")
+        cl_balance = db.get_ft_compensation_balance(st.session_state.username)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("累計補假 / Total Earned", f"{cl_balance['total_earned']} 天")
+        with col2:
+            st.metric("已使用 / Used", f"{cl_balance['used']} 天")
+        with col3:
+            st.metric("剩餘 / Remaining", f"{cl_balance['remaining']} 天")
+        
+        if cl_balance['remaining'] > 0:
+            st.markdown("**📋 可用補假日期 (按 FIFO 順序):**")
+            st.markdown("Available Compensation Leave Dates (FIFO Order):")
+            for avail_date in cl_balance['available_dates']:
+                st.markdown(f"- 📅 {avail_date['work_date']} ({avail_date['holiday_name']})")
+        else:
+            st.info("目前沒有可用的補假")
+        
+        st.markdown("---")
+        st.markdown("##### 📅 例假 (Rest Day)")
+        rd_balance = db.get_ft_rest_day_balance(st.session_state.username, datetime.now().year, datetime.now().month)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("當月應有 / Monthly Entitled", f"{rd_balance['base_entitled']} 天")
+        with col2:
+            st.metric("結轉 / Carried Forward", f"{rd_balance['carried_forward']} 天")
+        with col3:
+            st.metric("剩餘 / Remaining", f"{rd_balance['remaining']} 天")
+        
+        st.markdown(f"*每月固定 6 天例假，可結轉最多 6 天*")
+    
+    # ==========================================
+    # Tab 3: 請假紀錄
+    # ==========================================
+    with ft_tab3:
+        st.markdown("#### 📜 請假紀錄")
+        st.markdown("Leave History")
+        
+        selected_year = st.selectbox("選擇年份 / Select Year", [2026, 2025, 2024], index=0)
+        leave_history = db.get_ft_leave_history(st.session_state.username, selected_year)
+        
+        if not leave_history:
+            st.info(f"{selected_year} 年暫無請假紀錄")
+        else:
+            pending_leaves = [l for l in leave_history if l.get('status') == 'Pending']
+            approved_leaves = [l for l in leave_history if l.get('status') == 'Approved']
+            rejected_leaves = [l for l in leave_history if l.get('status') == 'Rejected']
+            
+            if pending_leaves:
+                st.markdown("##### ⏳ 待處理申請 / Pending Applications")
+                for leave in pending_leaves:
+                    st.markdown(f"📋 {leave.get('leave_date')} - {db.FT_LEAVE_TYPES.get(leave.get('leave_type', ''))} - {leave.get('leave_days', 1)}天 - ⏳ Pending")
+            
+            if approved_leaves:
+                st.markdown("##### ✅ 已批准申請 / Approved Applications")
+                for leave in approved_leaves:
+                    comp_info = f" (補假日期：{leave.get('compensation_work_date')})" if leave.get('leave_type') == 'CL' else ""
+                    st.markdown(f"📋 {leave.get('leave_date')} - {db.FT_LEAVE_TYPES.get(leave.get('leave_type', ''))} - {leave.get('leave_days', 1)}天 - ✅ Approved{comp_info}")
+            
+            if rejected_leaves:
+                st.markdown("##### ❌ 已拒絕申請 / Rejected Applications")
+                for leave in rejected_leaves:
+                    st.markdown(f"📋 {leave.get('leave_date')} - {db.FT_LEAVE_TYPES.get(leave.get('leave_type', ''))} - {leave.get('leave_days', 1)}天 - ❌ Rejected ({leave.get('rejection_reason', 'N/A')})")
+
+
+def ft_admin_view():
+    """管理員 FT 請假管理視圖"""
+    st.title(f"👔 全職員工請假管理系統")
+    
+    admin_ft_tab1, admin_ft_tab2, admin_ft_tab3 = st.tabs(["📊 請假審批", "📅 補假管理", "📈 大假管理"])
+    
+    # ==========================================
+    # Tab 1: 請假審批
+    # ==========================================
+    with admin_ft_tab1:
+        st.markdown("#### 📊 請假審批管理")
+        st.markdown("Leave Approval Management")
+        
+        pending_applications = db.get_all_ft_leave_applications(status="Pending")
+        
+        if not pending_applications:
+            st.success("✅ 目前沒有待處理的請假申請")
+        else:
+            st.warning(f"⏳ 共有 {len(pending_applications)} 宗待處理申請")
+            
+            for app in pending_applications:
+                with st.expander(f"📋 {app.get('username')} - {app.get('leave_date')} ({db.FT_LEAVE_TYPES.get(app.get('leave_type', ''), '')})"):
+                    col1, col2 = st.columns([3, 1])
+                    
+                    with col1:
+                        st.markdown(f"""
+                        **員工:** {app.get('username', 'N/A')}<br>
+                        **請假日期:** {app.get('leave_date', 'N/A')}<br>
+                        **請假類型:** {db.FT_LEAVE_TYPES.get(app.get('leave_type', ''), '')}<br>
+                        **天數:** {app.get('leave_days', 1)} 天<br>
+                        **備註:** {app.get('remarks', '無')}
+                        """, unsafe_allow_html=True)
+                        
+                        if app.get('leave_type') == 'CL' and app.get('compensation_work_date'):
+                            st.info(f"補假對應日期：{app.get('compensation_work_date')}")
+                    
+                    with col2:
+                        if st.button("✅ 批准", key=f"approve_{app.get('id')}"):
+                            result = db.approve_ft_leave(app.get('id'))
+                            if result['success']:
+                                st.success(result['message'])
+                                st.rerun()
+                            else:
+                                st.error(result['message'])
+                        
+                        rejection_reason = st.text_area("拒絕原因", key=f"reject_reason_{app.get('id')}", placeholder="選填")
+                        if st.button("❌ 拒絕", key=f"reject_{app.get('id')}"):
+                            result = db.reject_ft_leave(app.get('id'), rejection_reason)
+                            if result['success']:
+                                st.success(result['message'])
+                                st.rerun()
+                            else:
+                                st.error(result['message'])
+        
+        st.markdown("---")
+        st.markdown("##### 📜 最近審批紀錄 / Recent Approval History")
+        all_applications = db.get_all_ft_leave_applications()
+        
+        if all_applications:
+            processed = [a for a in all_applications if a.get('status') != 'Pending'][:10]
+            
+            if processed:
+                for app in processed:
+                    status_icon = "✅" if app.get('status') == 'Approved' else "❌"
+                    st.markdown(f"{status_icon} **{app.get('username')}** - {app.get('leave_date')} ({db.FT_LEAVE_TYPES.get(app.get('leave_type', ''), '')}) - {app.get('status')}")
+    
+    # ==========================================
+    # Tab 2: 補假管理
+    # ==========================================
+    with admin_ft_tab2:
+        st.markdown("#### 📅 補假管理")
+        st.markdown("Compensation Leave Management")
+        
+        st.markdown("##### ➕ 批量新增補假紀錄")
+        
+        all_users = db.get_all_users()
+        ft_users = [u['username'] for u in all_users if u.get('role') == 'FT']
+        
+        if not ft_users:
+            st.warning("系統中暫無全職員工帳號 (角色為 FT)")
+            ft_users = []
+        
+        with st.form("bulk_compensation"):
+            col1, col2 = st.columns(2)
+            with col1:
+                holiday_date = st.date_input("公眾假期日期 / Public Holiday Date", value=date(2026, 1, 1))
+            with col2:
+                holiday_name = st.text_input("假期名稱 / Holiday Name", value="元旦")
+            
+            selected_users = st.multiselect(
+                "選擇員工 / Select Employees",
+                options=ft_users,
+                default=ft_users,
+                help="選擇需要在該公眾假期工作並獲得補假的員工"
+            )
+            
+            submitted = st.form_submit_button("批量新增補假紀錄 / Bulk Add Compensation Records")
+            
+            if submitted:
+                if not selected_users:
+                    st.error("請至少選擇一位員工")
+                else:
+                    results = db.bulk_add_compensation_for_holiday(
+                        holiday_date.strftime("%Y-%m-%d"),
+                        holiday_name,
+                        selected_users
+                    )
+                    
+                    success_count = sum(1 for r in results if r['result']['success'])
+                    st.success(f"成功新增 {success_count} / {len(results)} 筆補假紀錄")
+        
+        st.markdown("---")
+        st.markdown("##### 📋 所有補假紀錄 / All Compensation Records")
+        
+        try:
+            all_comp_records = db.supabase.table("ft_compensation_tracking")                .select("*")                .order("work_date", desc=True)                .execute()
+            
+            if all_comp_records.data:
+                by_date = {}
+                for record in all_comp_records.data:
+                    date_key = record.get('work_date', 'Unknown')
+                    if date_key not in by_date:
+                        by_date[date_key] = []
+                    by_date[date_key].append(record)
+                
+                for work_date, records in sorted(by_date.items(), reverse=True):
+                    holiday_name = records[0].get('holiday_name', 'Public Holiday') if records else 'Unknown'
+                    st.markdown(f"**{work_date}** ({holiday_name}) - {len(records)} 位員工")
+                    usernames = [r.get('username', 'Unknown') for r in records]
+                    st.write(f"員工：{', '.join(usernames)}")
+            else:
+                st.info("暫無補假紀錄")
+        except Exception as e:
+            st.error(f"讀取紀錄失敗：{e}")
+    
+    # ==========================================
+    # Tab 3: 大假管理
+    # ==========================================
+    with admin_ft_tab3:
+        st.markdown("#### 📈 大假管理")
+        st.markdown("Annual Leave Management")
+        
+        st.markdown("##### ⚙️ 設定大假額")
+        
+        all_users = db.get_all_users()
+        ft_users = [u['username'] for u in all_users if u.get('role') == 'FT']
+        
+        if not ft_users:
+            st.warning("系統中暫無全職員工帳號 (角色為 FT)")
+            ft_users = []
+        
+        with st.form("set_annual_leave"):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                selected_user = st.selectbox("選擇員工 / Select Employee", options=ft_users)
+            with col2:
+                year = st.number_input("年份 / Year", min_value=2024, max_value=2030, value=2026)
+            with col3:
+                total_days = st.number_input("大假總額 / Total Days", min_value=0, max_value=30, value=14)
+            
+            transferred = st.number_input("從舊系統轉移天數 / Transferred from Old System", min_value=0, max_value=30, value=0)
+            
+            submitted = st.form_submit_button("設定大假額 / Set Annual Leave Entitlement")
+            
+            if submitted:
+                if not selected_user:
+                    st.error("請選擇員工")
+                else:
+                    result = db.set_ft_annual_leave_entitlement(selected_user, year, total_days, transferred)
+                    if result['success']:
+                        st.success(result['message'])
+                    else:
+                        st.error(result['message'])
+        
+        st.markdown("---")
+        st.markdown("##### 📊 所有員工大假餘額 / All Staff Annual Leave Balance")
+        
+        if ft_users:
+            for user in ft_users:
+                balance = db.get_ft_annual_leave_balance(user, 2026)
+                if balance['total_entitled'] > 0:
+                    st.markdown(f"**{user}**: {balance['remaining']} / {balance['total_entitled']} 天剩餘")
+
+
 if not st.session_state.logged_in:
     login_page()
 else:
     if st.session_state.role == "Admin":
         admin_view()
+    elif st.session_state.role == "FT":
+        ft_view()
     else:
         pt_view()
 
