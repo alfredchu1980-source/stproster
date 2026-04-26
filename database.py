@@ -10,7 +10,7 @@ def init_connection():
         key = st.secrets["SUPABASE_KEY"].strip()
         return create_client(url, key)
     except Exception as e:
-        st.error(f"資料庫連線配置錯誤: {e}")
+        st.error(f"資料庫連線配置錯誤：{e}")
         st.stop()
 
 supabase = init_connection()
@@ -57,7 +57,7 @@ def update_password(username, new_password):
     """修改密碼 (儲存前自動雜湊)"""
     hashed_pw = hash_password(new_password) if not (new_password.startswith('$2b$') or new_password.startswith('$2a$')) else new_password
     res = supabase.table("users").update({"password": hashed_pw}).eq("username", username).execute()
-    st.cache_data.clear() # 更新後清除快取
+    st.cache_data.clear()
     return res
 
 @st.cache_data(ttl=60)
@@ -84,7 +84,7 @@ def submit_pt_shift(username, shift_date, slots, remarks, hours_per_slot=4):
         "status": "Pending"
     }
     res = supabase.table("pt_shifts").insert(data).execute()
-    st.cache_data.clear() # 提交後清除快取
+    st.cache_data.clear()
     return res
 
 @st.cache_data(ttl=60)
@@ -106,146 +106,13 @@ def get_all_shifts(days=None):
 def update_shift_status(shift_id, new_status):
     """更新報更狀態"""
     res = supabase.table("pt_shifts").update({"status": new_status}).eq("id", shift_id).execute()
-    st.cache_data.clear() # 更新後清除快取
-    return res
-
-def cancel_shift(shift_id):
-    """取消報更 (將狀態設為 Cancelled)"""
-    res = supabase.table("pt_shifts").update({"status": "Cancelled"}).eq("id", shift_id).execute()
     st.cache_data.clear()
     return res
-
-def delete_shift(shift_id):
-    """刪除報更記錄 (僅限 Pending 狀態)"""
-    res = supabase.table("pt_shifts").delete().eq("id", shift_id).execute()
-    st.cache_data.clear()
-    return res
-
-def generate_ics_event(shift_data, system_name="報更系統"):
-    """生成 iCalendar (.ics) 格式的事件"""
-    from datetime import datetime
-    
-    # 解析班次時間
-    slot_times = {
-        "早班": ("09:00", "14:00"),
-        "中班": ("14:00", "18:00"),
-        "晚班": ("18:00", "23:00")
-    }
-    
-    slots = shift_data.get('slots', [])
-    if isinstance(slots, str):
-        slots = [s.strip() for s in slots.split(',')]
-    
-    # 合併所有時段的開始和結束時間
-    start_time = "00:00"
-    end_time = "00:00"
-    slot_names = []
-    
-    for slot in slots:
-        for slot_name, (s, e) in slot_times.items():
-            if slot_name in slot:
-                slot_names.append(slot_name)
-                if start_time == "00:00" or s < start_time:
-                    start_time = s
-                if end_time == "00:00" or e > end_time:
-                    end_time = e
-    
-    # 建立 ICS 內容
-    shift_date = shift_data.get('shift_date', '')
-    dtstart = f"{shift_date.replace('-', '')}T{start_time.replace(':', '')}00"
-    dtend = f"{shift_date.replace('-', '')}T{end_time.replace(':', '')}00"
-    
-    username = shift_data.get('username', '員工')
-    shift_id = shift_data.get('id', 'unknown')
-    
-    ics_content = f"""BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//{system_name}//Shift Roster//TW
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-BEGIN:VEVENT
-UID:shift-{shift_id}@{system_name.replace(" ", "")}
-DTSTAMP:{datetime.now().strftime('%Y%m%dT%H%M%S')}Z
-DTSTART:{dtstart}
-DTEND:{dtend}
-SUMMARY:{system_name} - {username} ({', '.join(slot_names)})
-DESCRIPTION:工作班次：{', '.join(slot_names)}\\n狀態：已核准\\n請準時上班！
-LOCATION:工作地點
-STATUS:CONFIRMED
-TRANSP:OPAQUE
-END:VEVENT
-END:VCALENDAR"""
-    
-    return ics_content
-
-def generate_ics_file_for_user(username, shifts_data, system_name="報更系統"):
-    """為用戶生成包含所有班表的 ICS 檔案"""
-    from datetime import datetime
-    
-    ics_events = []
-    
-    for shift in shifts_data:
-        if shift.get('status') != 'Accepted':
-            continue
-            
-        slot_times = {
-            "早班": ("09:00", "14:00"),
-            "中班": ("14:00", "18:00"),
-            "晚班": ("18:00", "23:00")
-        }
-        
-        slots = shift.get('slots', [])
-        if isinstance(slots, str):
-            slots = [s.strip() for s in slots.split(',')]
-        
-        start_time = "00:00"
-        end_time = "00:00"
-        slot_names = []
-        
-        for slot in slots:
-            for slot_name, (s, e) in slot_times.items():
-                if slot_name in slot:
-                    slot_names.append(slot_name)
-                    if start_time == "00:00" or s < start_time:
-                        start_time = s
-                    if end_time == "00:00" or e > end_time:
-                        end_time = e
-        
-        shift_date = shift.get('shift_date', '')
-        dtstart = f"{shift_date.replace('-', '')}T{start_time.replace(':', '')}00"
-        dtend = f"{shift_date.replace('-', '')}T{end_time.replace(':', '')}00"
-        shift_id = shift.get('id', 'unknown')
-        
-        event = f"""BEGIN:VEVENT
-UID:shift-{shift_id}@{system_name.replace(" ", "")}
-DTSTAMP:{datetime.now().strftime('%Y%m%dT%H%M%S')}Z
-DTSTART:{dtstart}
-DTEND:{dtend}
-SUMMARY:{system_name} - {username} ({', '.join(slot_names)})
-DESCRIPTION:工作班次：{', '.join(slot_names)}\\n狀態：已核准\\n請準時上班！
-LOCATION:工作地點
-STATUS:CONFIRMED
-TRANSP:OPAQUE
-END:VEVENT"""
-        ics_events.append(event)
-    
-    # 建立完整 ICS 檔案
-    ics_content = f"""BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//{system_name}//Shift Roster//TW
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-X-WR-CALNAME:{system_name} - {username} 班表
-X-WR-CALDESC:已核准的工作班表
-{''.join(ics_events)}
-END:VCALENDAR"""
-    
-    return ics_content
 
 def accept_all_pending():
     """一鍵接受所有待處理的報更"""
     res = supabase.table("pt_shifts").update({"status": "Accepted"}).eq("status", "Pending").execute()
-    st.cache_data.clear() # 更新後清除快取
+    st.cache_data.clear()
     return res
 
 @st.cache_data(ttl=300)
@@ -260,7 +127,7 @@ def get_system_settings():
             return val
     except:
         pass
-    return {"day": "Saturday", "time": "15:00", "enabled": True} # 預設值
+    return {"day": "Saturday", "time": "15:00", "enabled": True}
 
 def update_system_settings(new_settings):
     """更新系統設定"""
@@ -279,5 +146,300 @@ def update_system_settings(new_settings):
             st.cache_data.clear()
             return res
         except Exception as inner_e:
-            st.error(f"資料庫更新失敗: {str(inner_e)}")
+            st.error(f"資料庫更新失敗：{str(inner_e)}")
             raise e
+
+def delete_shift(shift_id):
+    """刪除報更申請"""
+    res = supabase.table("pt_shifts").delete().eq("id", shift_id).execute()
+    st.cache_data.clear()
+    return res
+
+def cancel_shift(shift_id):
+    """取消已接受的報更"""
+    res = supabase.table("pt_shifts").update({"status": "Cancelled"}).eq("id", shift_id).execute()
+    st.cache_data.clear()
+    return res
+
+def mark_shift_notified(shift_id):
+    """標記為已通知"""
+    try:
+        res = supabase.table("pt_shifts").update({"notified": True}).eq("id", shift_id).execute()
+        st.cache_data.clear()
+        return res
+    except:
+        return None
+
+
+# ==========================================
+# --- 全職員工請假管理模組 (FT Module) ---
+# ==========================================
+
+from datetime import datetime, timedelta
+
+FT_LEAVE_TYPES = {
+    "SL": "Sick Leave (病假)",
+    "AL": "Annual Leave (大假)",
+    "CL": "Compensation Leave (補假)"
+}
+
+
+def get_ft_compensation_balance(username):
+    """獲取全職員工補假餘額及工作紀錄"""
+    try:
+        res = supabase.table("ft_compensation_tracking")\
+            .select("*")\
+            .eq("username", username)\
+            .eq("status", "Approved")\
+            .order("work_date", asc=True)\
+            .execute()
+        
+        work_dates = []
+        if res.data:
+            for record in res.data:
+                used = supabase.table("ft_leaves")\
+                    .select("id")\
+                    .eq("username", username)\
+                    .eq("leave_type", "CL")\
+                    .eq("compensation_work_date", record["work_date"])\
+                    .eq("status", "Approved")\
+                    .execute()
+                
+                if not used.data:
+                    work_dates.append({
+                        "work_date": record["work_date"],
+                        "holiday_name": record.get("holiday_name", "Public Holiday"),
+                        "id": record["id"]
+                    })
+        
+        return {
+            "total_earned": len(res.data) if res.data else 0,
+            "used": (len(res.data) if res.data else 0) - len(work_dates),
+            "remaining": len(work_dates),
+            "available_dates": work_dates
+        }
+    except Exception as e:
+        return {"total_earned": 0, "used": 0, "remaining": 0, "available_dates": []}
+
+
+def add_ft_compensation_work(username, work_date, holiday_name):
+    """記錄全職員工於公眾假期工作"""
+    try:
+        existing = supabase.table("ft_compensation_tracking")\
+            .select("id")\
+            .eq("username", username)\
+            .eq("work_date", work_date)\
+            .execute()
+        
+        if existing.data:
+            return {"success": False, "message": "該日期已存在紀錄"}
+        
+        data = {
+            "username": username,
+            "work_date": work_date,
+            "holiday_name": holiday_name,
+            "status": "Approved",
+            "created_at": datetime.now().isoformat()
+        }
+        
+        res = supabase.table("ft_compensation_tracking").insert(data).execute()
+        st.cache_data.clear()
+        return {"success": True, "message": "補假紀錄已新增", "id": res.data[0]["id"] if res.data else None}
+    except Exception as e:
+        return {"success": False, "message": f"新增失敗：{e}"}
+
+
+def get_ft_annual_leave_balance(username, year=2026):
+    """獲取全職員工大假餘額"""
+    try:
+        al_record = supabase.table("ft_annual_leave")\
+            .select("*")\
+            .eq("username", username)\
+            .eq("year", year)\
+            .execute()
+        
+        if not al_record.data:
+            return {
+                "year": year,
+                "total_entitled": 0,
+                "used": 0,
+                "remaining": 0,
+                "message": "尚未設定年度大假額"
+            }
+        
+        record = al_record.data[0]
+        total_entitled = record.get("total_days", 0)
+        
+        used_res = supabase.table("ft_leaves")\
+            .select("leave_days")\
+            .eq("username", username)\
+            .eq("leave_type", "AL")\
+            .eq("status", "Approved")\
+            .gte("leave_date", f"{year}-01-01")\
+            .lte("leave_date", f"{year}-12-31")\
+            .execute()
+        
+        used = sum(r.get("leave_days", 1) for r in used_res.data) if used_res.data else 0
+        remaining = total_entitled - used
+        
+        return {
+            "year": year,
+            "total_entitled": total_entitled,
+            "used": used,
+            "remaining": remaining,
+            "message": f"{year}年度大假餘額"
+        }
+    except Exception as e:
+        return {"year": year, "total_entitled": 0, "used": 0, "remaining": 0, "message": str(e)}
+
+
+def set_ft_annual_leave_entitlement(username, year, total_days, transferred_from_old=0):
+    """設定全職員工年度大假額"""
+    try:
+        data = {
+            "username": username,
+            "year": year,
+            "total_days": total_days,
+            "transferred_from_old": transferred_from_old,
+            "updated_at": datetime.now().isoformat()
+        }
+        
+        res = supabase.table("ft_annual_leave")\
+            .upsert(data, on_conflict="username,year")\
+            .execute()
+        
+        st.cache_data.clear()
+        return {"success": True, "message": "大假額已設定"}
+    except Exception as e:
+        return {"success": False, "message": f"設定失敗：{e}"}
+
+
+def submit_ft_leave_application(username, leave_type, leave_date, leave_days=1, remarks="", compensation_work_date=None):
+    """提交全職員工請假申請"""
+    try:
+        try:
+            datetime.strptime(leave_date, "%Y-%m-%d")
+        except:
+            return {"success": False, "message": "日期格式錯誤，請使用 YYYY-MM-DD"}
+        
+        existing = supabase.table("ft_leaves")\
+            .select("id")\
+            .eq("username", username)\
+            .eq("leave_date", leave_date)\
+            .eq("status", "Pending")\
+            .execute()
+        
+        if existing.data:
+            return {"success": False, "message": "該日期已有待處理的請假申請"}
+        
+        if leave_type == "CL":
+            if not compensation_work_date:
+                balance = get_ft_compensation_balance(username)
+                if balance["remaining"] == 0:
+                    return {"success": False, "message": "沒有可用的補假餘額"}
+                compensation_work_date = balance["available_dates"][0]["work_date"]
+            else:
+                balance = get_ft_compensation_balance(username)
+                available_dates = [d["work_date"] for d in balance["available_dates"]]
+                if compensation_work_date not in available_dates:
+                    return {"success": False, "message": "所選補假日期不可用或已被使用"}
+        
+        if leave_type == "AL":
+            balance = get_ft_annual_leave_balance(username, datetime.strptime(leave_date, "%Y-%m-%d").year)
+            if balance["remaining"] < leave_days:
+                return {"success": False, "message": f"大假餘額不足（剩餘：{balance['remaining']} 天）"}
+        
+        data = {
+            "username": username,
+            "leave_type": leave_type,
+            "leave_date": leave_date,
+            "leave_days": leave_days,
+            "remarks": remarks,
+            "status": "Pending",
+            "submitted_at": datetime.now().isoformat()
+        }
+        
+        if compensation_work_date:
+            data["compensation_work_date"] = compensation_work_date
+        
+        res = supabase.table("ft_leaves").insert(data).execute()
+        st.cache_data.clear()
+        return {"success": True, "message": "請假申請已提交", "id": res.data[0]["id"] if res.data else None}
+    except Exception as e:
+        return {"success": False, "message": f"提交失敗：{e}"}
+
+
+@st.cache_data(ttl=60)
+def get_ft_leave_history(username, year=None):
+    """獲取全職員工請假紀錄"""
+    try:
+        query = supabase.table("ft_leaves")\
+            .select("*")\
+            .eq("username", username)\
+            .order("leave_date", desc=True)
+        
+        if year:
+            query = query.gte("leave_date", f"{year}-01-01").lte("leave_date", f"{year}-12-31")
+        
+        res = query.execute()
+        return res.data if res.data else []
+    except Exception as e:
+        return []
+
+
+def approve_ft_leave(leave_id):
+    """批准請假申請"""
+    try:
+        res = supabase.table("ft_leaves")\
+            .update({"status": "Approved", "approved_at": datetime.now().isoformat()})\
+            .eq("id", leave_id)\
+            .execute()
+        
+        st.cache_data.clear()
+        return {"success": True, "message": "請假已批准"}
+    except Exception as e:
+        return {"success": False, "message": f"批准失敗：{e}"}
+
+
+def reject_ft_leave(leave_id, reason=""):
+    """拒絕請假申請"""
+    try:
+        res = supabase.table("ft_leaves")\
+            .update({
+                "status": "Rejected", 
+                "rejected_at": datetime.now().isoformat(),
+                "rejection_reason": reason
+            })\
+            .eq("id", leave_id)\
+            .execute()
+        
+        st.cache_data.clear()
+        return {"success": True, "message": "請假已拒絕"}
+    except Exception as e:
+        return {"success": False, "message": f"拒絕失敗：{e}"}
+
+
+@st.cache_data(ttl=60)
+def get_all_ft_leave_applications(status=None):
+    """獲取所有全職員工請假申請（管理員用）"""
+    try:
+        query = supabase.table("ft_leaves")\
+            .select("*")\
+            .order("submitted_at", desc=True)
+        
+        if status:
+            query = query.eq("status", status)
+        
+        res = query.execute()
+        return res.data if res.data else []
+    except Exception as e:
+        return []
+
+
+def bulk_add_compensation_for_holiday(holiday_date, holiday_name, ft_usernames):
+    """批量為全職員工新增公眾假期工作紀錄"""
+    results = []
+    for username in ft_usernames:
+        result = add_ft_compensation_work(username, holiday_date, holiday_name)
+        results.append({"username": username, "result": result})
+    return results
