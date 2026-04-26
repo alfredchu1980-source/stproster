@@ -6,6 +6,66 @@ import io
 import calendar
 
 # ==========================================
+# --- ICS 行事曆生成函數 ---
+# ==========================================
+def generate_ics_content(username, accepted_shifts, system_name):
+    """生成 ICS 行事曆內容"""
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//{}//Shift Calendar//EN".format(system_name),
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "X-WR-CALNAME:{} - {} 班表".format(system_name, username),
+        "X-WR-TIMEZONE:Asia/Hong_Kong",
+    ]
+    
+    for shift in accepted_shifts:
+        shift_date = shift.get('shift_date', '')
+        slots = shift.get('slots', [])
+        if isinstance(slots, list):
+            slots_str = ", ".join(slots)
+        else:
+            slots_str = str(slots)
+        
+        # 解析日期
+        try:
+            dt = datetime.strptime(shift_date, "%Y-%m-%d")
+            dt_start = dt.strftime("%Y%m%d")
+            
+            # 根據時段設定時間
+            if "早班" in slots:
+                time_start = "090000"
+                time_end = "140000"
+            elif "中班" in slots:
+                time_start = "140000"
+                time_end = "180000"
+            elif "晚班" in slots:
+                time_start = "180000"
+                time_end = "230000"
+            else:
+                time_start = "090000"
+                time_end = "170000"
+            
+            lines.extend([
+                "BEGIN:VEVENT",
+                "UID:{}-{}@shifts".format(shift_date, username),
+                "DTSTAMP:{}".format(datetime.now().strftime("%Y%m%dT%H%M%SZ")),
+                "DTSTART;VALUE=DATE:{}".format(dt_start),
+                "DTEND;VALUE=DATE:{}".format(dt_start),
+                "SUMMARY:{} - {}".format(system_name, slots_str),
+                "DESCRIPTION:用戶：{}\\n時段：{}\\n狀態：Accepted".format(username, slots_str),
+                "STATUS:CONFIRMED",
+                "TRANSP:TRANSPARENT",
+                "END:VEVENT",
+            ])
+        except Exception as e:
+            continue
+    
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(lines)
+
+# ==========================================
 # --- 香港公眾假期資料 (2026 年) ---
 # ==========================================
 HONG_KONG_HOLIDAYS = {
@@ -44,7 +104,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.10",
+    "VERSION": "3.8.12",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -224,12 +284,7 @@ if eye_protection_mode:
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #c9d1d9 !important; background-color: #2d333b !important; border-color: #444c56 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #c9d1d9 !important; }
     
-    /* 🔒 全面保護：所有元素預設透明背景，除非明確指定 */
-    * { 
-        background-color: transparent !important; 
-    }
-    
-    /* 保護所有標籤和標題不被下拉選單樣式影響 */
+    /* 🔒 保護所有標籤和標題不被下拉選單樣式影響 (但不影響下拉選單本身) */
     [data-testid="stSelectbox"] label, [data-testid="stMultiSelect"] label, [data-testid="stDateInput"] label { 
         background-color: transparent !important; 
         color: #c9d1d9 !important; 
@@ -248,7 +303,7 @@ if eye_protection_mode:
     [data-testid="stSelectbox"] [data-baseweb="select"] svg { fill: #c9d1d9 !important; }
     [data-testid="stSelectbox"] label { color: #c9d1d9 !important; }
     
-    /* 下拉選單選項列表 - 護眼模式用深灰色背景 */
+    /* 下拉選單選項列表 - 護眼模式用深灰色背景 (強制不透明) */
     .st-ao, div[data-baseweb="menu"] { background-color: #2d333b !important; border-color: #444c56 !important; }
     .st-ao li, div[data-baseweb="menu"] li { background-color: #2d333b !important; color: #c9d1d9 !important; }
     .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #444c56 !important; color: #79c0ff !important; }
@@ -455,12 +510,7 @@ else:
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #2d3436 !important; background-color: #ffffff !important; border-color: #a5d6a7 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #2d3436 !important; }
     
-    /* 🔒 全面保護：所有元素預設透明背景，除非明確指定 */
-    * { 
-        background-color: transparent !important; 
-    }
-    
-    /* 保護所有標籤和標題不被下拉選單樣式影響 */
+    /* 🔒 保護所有標籤和標題不被下拉選單樣式影響 (但不影響下拉選單本身) */
     [data-testid="stSelectbox"] label, [data-testid="stMultiSelect"] label, [data-testid="stDateInput"] label { 
         background-color: transparent !important; 
         color: #2d3436 !important; 
@@ -479,7 +529,7 @@ else:
     [data-testid="stSelectbox"] [data-baseweb="select"] svg { fill: #000000 !important; }
     [data-testid="stSelectbox"] label { color: #2d3436 !important; font-weight: bold !important; }
     
-    /* 下拉選單選項列表 */
+    /* 下拉選單選項列表 - 強制不透明 */
     .st-ao, div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #cccccc !important; }
     .st-ao li, div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #000000 !important; }
     .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #dddddd !important; color: #000000 !important; }
@@ -1407,13 +1457,16 @@ def admin_view():
 def pt_view():
     st.title(f"Welcome / 歡迎 {st.session_state.username}，祝你有愉快的工作天！🚀")
     
-    # 檢查申請審批結果通知
+    # 檢查申請審批結果通知 - 只在首次登入時顯示一次
     res_all = db.get_user_shifts(st.session_state.username)
     if res_all.data:
         # 檢查是否有已審批但用戶還未查看的申請
         pending_notifications = [s for s in res_all.data if s.get('status') in ['Accepted', 'Rejected'] and s.get('notified', False) == False]
         
-        if pending_notifications:
+        # 只在 session 中首次顯示通知
+        if pending_notifications and 'notification_shown' not in st.session_state:
+            st.session_state.notification_shown = True
+            
             # 顯示彈出通知
             st.markdown("""
             <div id="notification-popup" style="
@@ -1476,12 +1529,9 @@ def pt_view():
             </style>
             """, unsafe_allow_html=True)
             
-            # 標記為已通知 (使用 session state)
-            if 'notified_shifts' not in st.session_state:
-                st.session_state.notified_shifts = []
+            # 標記為已通知
             for notif in pending_notifications:
-                if notif['id'] not in st.session_state.notified_shifts:
-                    st.session_state.notified_shifts.append(notif['id'])
+                db.mark_shift_notified(notif['id'])
     
     deadline = db.get_system_settings()
     if deadline.get("enabled", True):
@@ -1492,6 +1542,12 @@ def pt_view():
     tab1, tab2, tab3 = st.tabs(["📅 提交報更", "📜 我的紀錄", "⚙️ 個人設定"])
     
     with tab1:
+        # 初始化確認狀態
+        if 'show_confirm_dialog' not in st.session_state:
+            st.session_state.show_confirm_dialog = False
+        if 'pending_shift_data' not in st.session_state:
+            st.session_state.pending_shift_data = None
+        
         if is_before_deadline():
             mode = st.radio("選擇報更模式", ["單日/連續日期範圍", "按星期重複 (每逢週...)"])
             
@@ -1553,18 +1609,113 @@ def pt_view():
                             st.warning(f"⚠️ 偵測到您在 {yesterday} 為晚班，{d.strftime('%Y-%m-%d')} 報早班可能導致睡眠不足。")
             
             remarks = st.text_area("備註 (選填)")
+            
+            # 提交按鈕 - 顯示確認對話框
             if st.button("🚀 提交報更資料", type="primary"):
                 if not chosen:
                     st.warning("⚠️ 請選擇時段")
                 elif not dates_to_submit:
                     st.warning("⚠️ 請選擇日期")
                 else:
-                    for d in dates_to_submit:
-                        d_str = d.strftime("%Y-%m-%d")
-                        if not db.check_duplicate_shift(st.session_state.username, d_str):
-                            db.submit_pt_shift(st.session_state.username, d_str, chosen, remarks, hours_per_slot=CONFIG["HOURS_PER_SLOT"])
-                    st.success("✅ 多謝提供報更資料，請耐心等待主管批核。")
-                    st.balloons()
+                    # 儲存待提交資料並顯示確認對話框
+                    st.session_state.pending_shift_data = {
+                        'dates': dates_to_submit,
+                        'slots': chosen,
+                        'remarks': remarks
+                    }
+                    st.session_state.show_confirm_dialog = True
+                    st.rerun()
+            
+            # 顯示確認對話框
+            if st.session_state.show_confirm_dialog:
+                # 根據護眼模式設定樣式
+                eye_protection_mode = st.session_state.get('eye_protection', True)
+                
+                if eye_protection_mode:
+                    # 護眼模式 - 深色主題
+                    bg_color = "#2d333b"
+                    text_color = "#c9d1d9"
+                    border_color = "#444c56"
+                    btn_yes_bg = "#28a745"
+                    btn_no_bg = "#dc3545"
+                else:
+                    # 牛奶綠模式 - 淺色主題
+                    bg_color = "#ffffff"
+                    text_color = "#2d3436"
+                    border_color = "#a5d6a7"
+                    btn_yes_bg = "#66bb6a"
+                    btn_no_bg = "#ef5350"
+                
+                st.markdown(f"""
+                <div style="
+                    background-color: {bg_color};
+                    border: 2px solid {border_color};
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    text-align: center;
+                ">
+                    <div style="font-size: 20px; font-weight: bold; color: {text_color}; margin-bottom: 15px;">
+                        ❓ 報更申請是否正確？
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col_yes, col_no = st.columns(2)
+                
+                with col_yes:
+                    if st.button("✅ 是", type="primary", use_container_width=True, key="confirm_yes"):
+                        # 提交資料
+                        data = st.session_state.pending_shift_data
+                        for d in data['dates']:
+                            d_str = d.strftime("%Y-%m-%d")
+                            if not db.check_duplicate_shift(st.session_state.username, d_str):
+                                db.submit_pt_shift(st.session_state.username, d_str, data['slots'], data['remarks'], hours_per_slot=CONFIG["HOURS_PER_SLOT"])
+                        
+                        # 清除狀態並顯示成功訊息
+                        st.session_state.show_confirm_dialog = False
+                        st.session_state.pending_shift_data = None
+                        st.session_state.show_success_msg = True
+                        st.rerun()
+                
+                with col_no:
+                    if st.button("❌ 否", use_container_width=True, key="confirm_no"):
+                        # 取消並回到表單
+                        st.session_state.show_confirm_dialog = False
+                        st.session_state.pending_shift_data = None
+                        st.info("ℹ️ 已取消提交，請修改後再提交")
+                        st.rerun()
+            
+            # 顯示成功訊息
+            if st.session_state.get('show_success_msg', False):
+                eye_protection_mode = st.session_state.get('eye_protection', True)
+                
+                if eye_protection_mode:
+                    bg_color = "#262c33"
+                    text_color = "#c9d1d9"
+                    border_color = "#444c56"
+                else:
+                    bg_color = "#f1f8e9"
+                    text_color = "#2d3436"
+                    border_color = "#c8e6c9"
+                
+                st.markdown(f"""
+                <div style="
+                    background-color: {bg_color};
+                    border: 2px solid {border_color};
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    text-align: center;
+                ">
+                    <div style="font-size: 20px; font-weight: bold; color: {text_color};">
+                        ✅ 有關資料已經傳送及待確認
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.session_state.show_success_msg = False
+                st.balloons()
         else:
             st.error("❌ 已超過截止時間")
 
@@ -1590,18 +1741,21 @@ def pt_view():
             
             accepted_shifts = [s for s in res.data if s.get('status') == 'Accepted']
             if accepted_shifts:
+                # 自動生成 ICS 檔案
+                ics_content = generate_ics_content(st.session_state.username, accepted_shifts, CONFIG["SYSTEM_NAME"])
+                
                 col_cal1, col_cal2 = st.columns([3, 1])
                 
                 with col_cal1:
-                    st.info(f"📊 目前有 {len(accepted_shifts)} 個已核准的班表可同步")
+                    st.success(f"✅ 目前有 {len(accepted_shifts)} 個已核准的班表可同步")
                 
                 with col_cal2:
-                    ics_content = db.generate_ics_file_for_user(st.session_state.username, accepted_shifts, CONFIG["SYSTEM_NAME"])
                     st.download_button(
                         "📥 下載行事曆 (.ics)",
                         ics_content,
                         f"Shifts_{st.session_state.username}_{date.today().strftime('%Y%m%d')}.ics",
-                        key="download_ics"
+                        key="download_ics",
+                        use_container_width=True
                     )
                 
                 st.markdown("""
