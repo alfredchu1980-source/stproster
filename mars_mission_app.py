@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.9",
+    "VERSION": "3.8.10",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -114,7 +114,7 @@ if eye_protection_mode:
     h1, h2, h3, h4, h5, h6, p, span, div, label, a { color: #c9d1d9 !important; }
     [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p { color: #c9d1d9 !important; }
     
-    /* 所有按鈕 - 包括登入按鈕 */
+    /* 所有按鈕 - 包括登入按鈕 - 深灰色背景 */
     .stButton>button, button[kind="primary"], button[kind="secondary"], button[kind="tertiary"], input[type="submit"] { 
         background-color: #30363d !important; 
         color: #79c0ff !important; 
@@ -242,30 +242,30 @@ if eye_protection_mode:
         background-color: transparent !important; 
     }
     
-    /* 下拉選單 (Pull-down bar) - Selectbox - 只改變輸入框，不影響標籤 */
-    [data-testid="stSelectbox"] [data-baseweb="select"] { background-color: #ffffff !important; }
-    [data-testid="stSelectbox"] [data-baseweb="select"] input { color: #000000 !important; background-color: #ffffff !important; }
-    [data-testid="stSelectbox"] [data-baseweb="select"] svg { fill: #000000 !important; }
+    /* 下拉選單 (Pull-down bar) - Selectbox - 護眼模式用深灰色背景 */
+    [data-testid="stSelectbox"] [data-baseweb="select"] { background-color: #30363d !important; }
+    [data-testid="stSelectbox"] [data-baseweb="select"] input { color: #c9d1d9 !important; background-color: #30363d !important; }
+    [data-testid="stSelectbox"] [data-baseweb="select"] svg { fill: #c9d1d9 !important; }
     [data-testid="stSelectbox"] label { color: #c9d1d9 !important; }
     
-    /* 下拉選單選項列表 */
-    .st-ao, div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #cccccc !important; }
-    .st-ao li, div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #000000 !important; }
-    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #dddddd !important; color: #000000 !important; }
+    /* 下拉選單選項列表 - 護眼模式用深灰色背景 */
+    .st-ao, div[data-baseweb="menu"] { background-color: #2d333b !important; border-color: #444c56 !important; }
+    .st-ao li, div[data-baseweb="menu"] li { background-color: #2d333b !important; color: #c9d1d9 !important; }
+    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #444c56 !important; color: #79c0ff !important; }
     
-    /* 多選選單 (Multiselect) - 只改變輸入框，不影響標籤 */
-    [data-testid="stMultiSelect"] [data-baseweb="select"] { background-color: #ffffff !important; }
-    [data-testid="stMultiSelect"] [data-baseweb="select"] input { color: #000000 !important; background-color: #ffffff !important; }
+    /* 多選選單 (Multiselect) - 護眼模式用深灰色背景 */
+    [data-testid="stMultiSelect"] [data-baseweb="select"] { background-color: #30363d !important; }
+    [data-testid="stMultiSelect"] [data-baseweb="select"] input { color: #c9d1d9 !important; background-color: #30363d !important; }
     [data-testid="stMultiSelect"] label { color: #c9d1d9 !important; }
     
-    /* 日期輸入 - 只改變輸入框，不影響標籤 */
-    [data-testid="stDateInput"] [data-baseweb="input"] { background-color: #ffffff !important; }
-    [data-testid="stDateInput"] [data-baseweb="input"] input { color: #000000 !important; background-color: #ffffff !important; }
+    /* 日期輸入 - 護眼模式用深灰色背景 */
+    [data-testid="stDateInput"] [data-baseweb="input"] { background-color: #30363d !important; }
+    [data-testid="stDateInput"] [data-baseweb="input"] input { color: #c9d1d9 !important; background-color: #30363d !important; }
     [data-testid="stDateInput"] label { color: #c9d1d9 !important; }
     
     /* Radio buttons */
     [data-testid="stRadio"] label { color: #c9d1d9 !important; }
-    [data-testid="stRadio"] .st-az { background-color: #2d333b !important; border-color: #444c56 !important; }
+    [data-testid="stRadio"] .st-az { background-color: #30363d !important; border-color: #444c56 !important; }
     
     /* Checkbox */
     [data-testid="stCheckbox"] label { color: #c9d1d9 !important; }
