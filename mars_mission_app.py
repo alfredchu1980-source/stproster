@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.5",
+    "VERSION": "3.8.6",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -224,22 +224,31 @@ if eye_protection_mode:
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #c9d1d9 !important; background-color: #2d333b !important; border-color: #444c56 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #c9d1d9 !important; }
     
-    /* 下拉選單 (Pull-down bar) - Selectbox */
-    [data-testid="stSelectbox"] { background-color: #2d333b !important; }
-    [data-testid="stSelectbox"] label { color: #c9d1d9 !important; }
-    [data-testid="stSelectbox"] .css-1dimb5e, [data-testid="stSelectbox"] .st-az { background-color: #2d333b !important; color: #c9d1d9 !important; border-color: #444c56 !important; }
-    [data-testid="stSelectbox"] input { color: #c9d1d9 !important; background-color: #2d333b !important; }
-    [data-testid="stSelectbox"] .st-ak { background-color: #2d333b !important; border-color: #444c56 !important; }
+    /* 下拉選單 (Pull-down bar) - Selectbox - 白色背景黑色文字 */
+    [data-testid="stSelectbox"] { background-color: #ffffff !important; }
+    [data-testid="stSelectbox"] label { color: #000000 !important; font-weight: bold !important; }
+    [data-testid="stSelectbox"] .css-1dimb5e, [data-testid="stSelectbox"] .st-az { background-color: #ffffff !important; color: #000000 !important; border-color: #000000 !important; }
+    [data-testid="stSelectbox"] input { color: #000000 !important; background-color: #ffffff !important; }
+    [data-testid="stSelectbox"] .st-ak { background-color: #ffffff !important; border-color: #000000 !important; }
     
     /* 下拉選單選項列表 */
-    .st-ao, div[data-baseweb="menu"] { background-color: #2d333b !important; border-color: #444c56 !important; }
-    .st-ao li, div[data-baseweb="menu"] li { background-color: #2d333b !important; color: #c9d1d9 !important; }
-    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #444c56 !important; color: #79c0ff !important; }
+    .st-ao, div[data-baseweb="menu"] { background-color: #ffffff !important; border-color: #cccccc !important; }
+    .st-ao li, div[data-baseweb="menu"] li { background-color: #ffffff !important; color: #000000 !important; }
+    .st-ao li:hover, div[data-baseweb="menu"] li:hover { background-color: #dddddd !important; color: #000000 !important; }
     
-    /* 多選選單 (Multiselect) */
-    [data-testid="stMultiSelect"] { background-color: #2d333b !important; }
-    [data-testid="stMultiSelect"] label { color: #c9d1d9 !important; }
-    [data-testid="stMultiSelect"] .css-1dimb5e, [data-testid="stMultiSelect"] .st-az { background-color: #2d333b !important; color: #c9d1d9 !important; border-color: #444c56 !important; }
+    /* 多選選單 (Multiselect) - 白色背景黑色文字 */
+    [data-testid="stMultiSelect"] { background-color: #ffffff !important; }
+    [data-testid="stMultiSelect"] label { color: #000000 !important; }
+    [data-testid="stMultiSelect"] .css-1dimb5e, [data-testid="stMultiSelect"] .st-az { background-color: #ffffff !important; color: #000000 !important; border-color: #000000 !important; }
+    
+    /* 全局下拉選單強制樣式 - 適用於所有 Streamlit 版本 */
+    div[data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; }
+    div[data-baseweb="select"] input { color: #000000 !important; background-color: #ffffff !important; }
+    div[data-baseweb="select"] svg { fill: #000000 !important; }
+    div[data-baseweb="popover"] { background-color: #ffffff !important; }
+    div[data-baseweb="menu"] { background-color: #ffffff !important; }
+    div[data-baseweb="menu"] li { color: #000000 !important; background-color: #ffffff !important; }
+    div[data-baseweb="menu"] li:hover { background-color: #dddddd !important; }
     
     /* Radio buttons */
     [data-testid="stRadio"] label { color: #c9d1d9 !important; }
@@ -448,6 +457,15 @@ else:
     [data-testid="stMultiSelect"] { background-color: #ffffff !important; }
     [data-testid="stMultiSelect"] label { color: #000000 !important; }
     [data-testid="stMultiSelect"] .css-1dimb5e, [data-testid="stMultiSelect"] .st-az { background-color: #ffffff !important; color: #000000 !important; border-color: #000000 !important; }
+    
+    /* 全局下拉選單強制樣式 - 適用於所有 Streamlit 版本 */
+    div[data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; }
+    div[data-baseweb="select"] input { color: #000000 !important; background-color: #ffffff !important; }
+    div[data-baseweb="select"] svg { fill: #000000 !important; }
+    div[data-baseweb="popover"] { background-color: #ffffff !important; }
+    div[data-baseweb="menu"] { background-color: #ffffff !important; }
+    div[data-baseweb="menu"] li { color: #000000 !important; background-color: #ffffff !important; }
+    div[data-baseweb="menu"] li:hover { background-color: #dddddd !important; }
     
     /* Radio buttons - 配合牛奶綠背景 */
     [data-testid="stRadio"] label { color: #2d3436 !important; }
