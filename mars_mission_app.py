@@ -44,7 +44,7 @@ if 'eye_protection' not in st.session_state:
 
 CONFIG = {
     "SYSTEM_NAME": "火星殖民計劃",
-    "VERSION": "3.8.7",
+    "VERSION": "3.8.9",
     "SLOTS": {
         "早班": "09:00 - 14:00",
         "中班": "14:00 - 18:00",
@@ -224,6 +224,24 @@ if eye_protection_mode:
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #c9d1d9 !important; background-color: #2d333b !important; border-color: #444c56 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #c9d1d9 !important; }
     
+    /* 🔒 全面保護：所有元素預設透明背景，除非明確指定 */
+    * { 
+        background-color: transparent !important; 
+    }
+    
+    /* 保護所有標籤和標題不被下拉選單樣式影響 */
+    [data-testid="stSelectbox"] label, [data-testid="stMultiSelect"] label, [data-testid="stDateInput"] label { 
+        background-color: transparent !important; 
+        color: #c9d1d9 !important; 
+    }
+    .stSubheader label, .stSubheader, .stMarkdown, .stInfo, .stAlert { 
+        background-color: transparent !important; 
+        color: #c9d1d9 !important; 
+    }
+    h1, h2, h3, h4, h5, h6, p, span, div { 
+        background-color: transparent !important; 
+    }
+    
     /* 下拉選單 (Pull-down bar) - Selectbox - 只改變輸入框，不影響標籤 */
     [data-testid="stSelectbox"] [data-baseweb="select"] { background-color: #ffffff !important; }
     [data-testid="stSelectbox"] [data-baseweb="select"] input { color: #000000 !important; background-color: #ffffff !important; }
@@ -240,6 +258,11 @@ if eye_protection_mode:
     [data-testid="stMultiSelect"] [data-baseweb="select"] input { color: #000000 !important; background-color: #ffffff !important; }
     [data-testid="stMultiSelect"] label { color: #c9d1d9 !important; }
     
+    /* 日期輸入 - 只改變輸入框，不影響標籤 */
+    [data-testid="stDateInput"] [data-baseweb="input"] { background-color: #ffffff !important; }
+    [data-testid="stDateInput"] [data-baseweb="input"] input { color: #000000 !important; background-color: #ffffff !important; }
+    [data-testid="stDateInput"] label { color: #c9d1d9 !important; }
+    
     /* Radio buttons */
     [data-testid="stRadio"] label { color: #c9d1d9 !important; }
     [data-testid="stRadio"] .st-az { background-color: #2d333b !important; border-color: #444c56 !important; }
@@ -247,8 +270,9 @@ if eye_protection_mode:
     /* Checkbox */
     [data-testid="stCheckbox"] label { color: #c9d1d9 !important; }
     
-    /* 警告訊息 */
+    /* 警告訊息 - 保持深色背景 */
     .stAlert { background-color: #262c33 !important; color: #c9d1d9 !important; border: 1px solid #444c56 !important; }
+    .stInfo { background-color: #262c33 !important; color: #c9d1d9 !important; border: 1px solid #444c56 !important; }
     
     /* 同事班表高亮 - 早班 (明亮黃色 - 兩種模式都清晰) */
     .colleague-morning {
@@ -431,6 +455,24 @@ else:
     [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea { color: #2d3436 !important; background-color: #ffffff !important; border-color: #a5d6a7 !important; }
     [data-testid="stTextInput"] label, [data-testid="stTextArea"] label { color: #2d3436 !important; }
     
+    /* 🔒 全面保護：所有元素預設透明背景，除非明確指定 */
+    * { 
+        background-color: transparent !important; 
+    }
+    
+    /* 保護所有標籤和標題不被下拉選單樣式影響 */
+    [data-testid="stSelectbox"] label, [data-testid="stMultiSelect"] label, [data-testid="stDateInput"] label { 
+        background-color: transparent !important; 
+        color: #2d3436 !important; 
+    }
+    .stSubheader label, .stSubheader, .stMarkdown, .stInfo, .stAlert { 
+        background-color: transparent !important; 
+        color: #2d3436 !important; 
+    }
+    h1, h2, h3, h4, h5, h6, p, span, div { 
+        background-color: transparent !important; 
+    }
+    
     /* 下拉選單 (Pull-down bar) - Selectbox - 只改變輸入框，不影響標籤 */
     [data-testid="stSelectbox"] [data-baseweb="select"] { background-color: #ffffff !important; }
     [data-testid="stSelectbox"] [data-baseweb="select"] input { color: #000000 !important; background-color: #ffffff !important; }
@@ -447,6 +489,11 @@ else:
     [data-testid="stMultiSelect"] [data-baseweb="select"] input { color: #000000 !important; background-color: #ffffff !important; }
     [data-testid="stMultiSelect"] label { color: #2d3436 !important; font-weight: bold !important; }
     
+    /* 日期輸入 - 只改變輸入框，不影響標籤 */
+    [data-testid="stDateInput"] [data-baseweb="input"] { background-color: #ffffff !important; }
+    [data-testid="stDateInput"] [data-baseweb="input"] input { color: #000000 !important; background-color: #ffffff !important; }
+    [data-testid="stDateInput"] label { color: #2d3436 !important; }
+    
     /* Radio buttons - 配合牛奶綠背景 */
     [data-testid="stRadio"] label { color: #2d3436 !important; }
     [data-testid="stRadio"] .st-az { background-color: #ffffff !important; border-color: #81c784 !important; }
@@ -456,6 +503,7 @@ else:
     
     /* 警告訊息 - 配合牛奶綠背景 */
     .stAlert { background-color: #f1f8e9 !important; color: #2d3436 !important; border: 1px solid #c8e6c9 !important; }
+    .stInfo { background-color: #e3f2fd !important; color: #2d3436 !important; border: 1px solid #90caf9 !important; }
     
     /* 同事班表高亮 - 早班 (明亮黃色 - 兩種模式都清晰) */
     .colleague-morning {
