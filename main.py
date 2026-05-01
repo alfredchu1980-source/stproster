@@ -34,6 +34,25 @@ if 'role' not in st.session_state:
     st.session_state.role = None
 
 # ==========================================
+# --- 角色映射（修復 PICKER/PACKER → PT） ---
+# ==========================================
+ROLE_MAPPING = {
+    "PICKER": "PT",
+    "PACKER": "PT",
+    "PT": "PT",
+    "FT": "FT",
+    "ADMIN": "ADMIN",
+    "ADMINISTRATOR": "ADMIN",
+}
+
+def normalize_role(role):
+    """標準化角色名稱"""
+    if not role:
+        return None
+    role_upper = str(role).strip().upper()
+    return ROLE_MAPPING.get(role_upper, role_upper)
+
+# ==========================================
 # --- 應用 CSS 樣式 ---
 # ==========================================
 st.markdown(f"<style>{get_theme_css()}</style>", unsafe_allow_html=True)
@@ -48,18 +67,24 @@ def main():
     if not st.session_state.logged_in:
         login_page()
     else:
-        # 根據角色顯示不同視圖
-        role = st.session_state.role
+        # 【修復】標準化角色名稱
+        raw_role = st.session_state.role
+        user_role = normalize_role(raw_role)
         
-        if role == "Admin":
+        if user_role == "ADMIN":
             admin_view()
-        elif role == "PT":
-            pt_view()
-        elif role == "FT":
+        elif user_role == "FT":
             ft_view()
+        elif user_role == "PT":
+            pt_view()
         else:
-            st.error(f"未知角色：{role}")
-            st.stop()
+            st.error(f"❌ 未知角色：{raw_role} (標準化後：{user_role})")
+            st.info("💡 請聯繫管理員檢查您的帳號角色設定")
+            if st.button("登出"):
+                st.session_state.logged_in = False
+                st.session_state.username = None
+                st.session_state.role = None
+                st.rerun()
 
 # ==========================================
 # --- 頁尾 ---
