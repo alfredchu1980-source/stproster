@@ -53,7 +53,7 @@ def main():
         
         if role == "Admin":
             admin_view()
-        elif role in ["PT", "Picker", "Packer"]:
+        elif role in ["PT", "PICKER", "PACKER"]:
             pt_view()
         elif role == "FT":
             ft_view()
