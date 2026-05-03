@@ -51,7 +51,7 @@ def main():
         # 根據角色顯示不同視圖
         role = st.session_state.role
         
-        if role == "Admin":
+        if role == "ADMIN":
             admin_view()
         elif role in ["PT", "PICKER", "PACKER"]:
             pt_view()
