@@ -6,7 +6,6 @@ Login Page Module
 
 import streamlit as st
 import database as db
-from config.settings import CONFIG 
 
 def change_password_ui():
     """修改密碼 UI 元件"""
@@ -31,14 +30,13 @@ def change_password_ui():
 
 def login_page():
     """渲染登入頁面"""
-    # 1. 系統大標題與圖示
-    st.title(f"🚀 {CONFIG.get('SYSTEM_NAME', '火星殖民計劃')}")
+    st.title("🚀 火星殖民計劃")
     
-    # 2. 顯示名言與版本 (這裡就是您要求加入的位置)
-    st.markdown(f"""
-        <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-bottom: 25px;">
-            <h4 style="margin: 0; color: #31333F;">"This is not the end."</h4>
-            <p style="margin: 5px 0 0 0; font-size: 0.9em; color: gray;">System Version: {CONFIG.get('VERSION', 'v5.2.0')}</p>
+    # 視覺升級：使用 var(--secondary-background-color) 自動適應暗黑模式，並放大字體 (h2)
+    st.markdown("""
+        <div style="background-color: var(--secondary-background-color); padding: 25px; border-radius: 8px; border-left: 6px solid #ff4b4b; margin-bottom: 30px;">
+            <h2 style="margin: 0; font-style: italic; color: var(--text-color);">"This is not the end."</h2>
+            <p style="margin: 10px 0 0 0; font-size: 1.1em; color: #888888;">System Version: v5.2.0</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -49,7 +47,7 @@ def login_page():
         st.error("❌ 登入失敗次數過多，帳號已暫時鎖定。請聯繫管理員。")
         return
     
-    # 3. 登入表單
+    # 登入表單
     with st.form("login_form"):
         st.write("### 請驗證身份")
         u = st.text_input("用戶名稱 (Username)").strip().lower()
