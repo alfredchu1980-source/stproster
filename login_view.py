@@ -6,7 +6,6 @@ Login Page Module
 
 import streamlit as st
 import database as db
-from config.settings import CONFIG 
 
 def change_password_ui():
     """修改密碼 UI 元件"""
@@ -31,14 +30,14 @@ def change_password_ui():
 
 def login_page():
     """渲染登入頁面"""
-    # 1. 系統大標題與圖示
-    st.title(f"🚀 {CONFIG.get('SYSTEM_NAME', '火星殖民計劃')}")
+    # 1. 直接刻上系統大標題，不依賴任何外部設定檔
+    st.title("🚀 火星殖民計劃")
     
-    # 2. 顯示名言與版本 (這裡就是您要求加入的位置)
-    st.markdown(f"""
+    # 2. 直接刻上名言與版本號
+    st.markdown("""
         <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-bottom: 25px;">
             <h4 style="margin: 0; color: #31333F;">"This is not the end."</h4>
-            <p style="margin: 5px 0 0 0; font-size: 0.9em; color: gray;">System Version: {CONFIG.get('VERSION', 'v5.2.0')}</p>
+            <p style="margin: 5px 0 0 0; font-size: 0.9em; color: gray;">System Version: v5.2.0</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -62,6 +61,7 @@ def login_page():
             try:
                 user = db.verify_user(u, p)
                 if user:
+                    # 使用 authenticated 確保與主程式對齊
                     st.session_state.authenticated = True
                     st.session_state.username = user["username"]
                     st.session_state.role = user["role"]
