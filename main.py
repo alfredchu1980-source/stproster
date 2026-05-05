@@ -8,6 +8,10 @@ from views.components.common import render_user_profile_card, get_sidebar_footer
 SUPABASE_URL = "https://euflvcgqmtvgaeqjrzjx.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1Zmx2Y2dxbXR2Z2FlcWpyemp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1OTAzOTQsImV4cCI6MjA5MjE2NjM5NH0.qocv6aZC30b2YtIwsJrziVgJCI2ms8R9v1eM--8TwcQ"
 
+SYSTEM_TITLE = "火星殖民計劃"
+SYSTEM_VERSION = "v5.2.0"
+SYSTEM_SUBTITLE = "This is not the end."
+
 def main():
     # 設置頁面必須放在最前面
     st.set_page_config(
