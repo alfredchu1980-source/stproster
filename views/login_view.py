@@ -6,9 +6,7 @@ Login Page Module
 
 import streamlit as st
 import database as db
-# 修改這裡：從新位置 config.settings 導入 CONFIG
 from config.settings import CONFIG 
-
 
 def change_password_ui():
     """修改密碼 UI 元件"""
@@ -19,7 +17,6 @@ def change_password_ui():
             new_p = st.text_input("輸入新密碼", type="password")
             confirm_p = st.text_input("確認新密碼", type="password")
             if st.form_submit_button("確認修改"):
-                # 從 session_state 獲取當前用戶
                 username = st.session_state.get('username')
                 user = db.verify_user(username, old_p)
                 if not user:
@@ -32,12 +29,18 @@ def change_password_ui():
                     db.update_password(username, new_p)
                     st.success("✅ 密碼修改成功！")
 
-
 def login_page():
     """渲染登入頁面"""
-    # 從 CONFIG 獲取系統名稱[cite: 9]
-    st.title(f"📅 {CONFIG.get('SYSTEM_NAME', '火星殖民計劃')}")
-    st.subheader(f"請登入系統 (Ver: {CONFIG.get('VERSION', 'Unknown')})")
+    # 1. 系統大標題與圖示
+    st.title(f"🚀 {CONFIG.get('SYSTEM_NAME', '火星殖民計劃')}")
+    
+    # 2. 顯示名言與版本 (這裡就是您要求加入的位置)
+    st.markdown(f"""
+        <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 5px solid #ff4b4b; margin-bottom: 25px;">
+            <h4 style="margin: 0; color: #31333F;">"This is not the end."</h4>
+            <p style="margin: 5px 0 0 0; font-size: 0.9em; color: gray;">System Version: {CONFIG.get('VERSION', 'v5.2.0')}</p>
+        </div>
+    """, unsafe_allow_html=True)
     
     if 'login_attempts' not in st.session_state:
         st.session_state.login_attempts = 0
@@ -46,18 +49,20 @@ def login_page():
         st.error("❌ 登入失敗次數過多，帳號已暫時鎖定。請聯繫管理員。")
         return
     
+    # 3. 登入表單
     with st.form("login_form"):
+        st.write("### 請驗證身份")
         u = st.text_input("用戶名稱 (Username)").strip().lower()
         p = st.text_input("密碼 (Password)", type="password").strip()
         
-        if st.form_submit_button("登入系統", use_container_width=True):
+        if st.form_submit_button("執行登入", use_container_width=True):
             if not u or not p:
                 st.warning("請輸入用戶名稱和密碼")
                 return
             try:
                 user = db.verify_user(u, p)
                 if user:
-                    st.session_state.authenticated = True # 改為與 main.py 一致的 key
+                    st.session_state.authenticated = True
                     st.session_state.username = user["username"]
                     st.session_state.role = user["role"]
                     st.session_state.login_attempts = 0
