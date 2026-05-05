@@ -1,26 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-工具模組
-Utility Modules
+from network_utils import get_theme_css, is_on_company_wifi
 
-【v1.1 更新】新增日曆式排班表 Excel 生成模組
-"""
+def get_theme_css():
+    """回傳自定義的 CSS 樣式"""
+    return """
+    <style>
+    .stButton>button { border-radius: 8px; }
+    </style>
+    """
 
-from .ics_generator import generate_ics_content
-from .excel_generator import generate_excel_v6
-from .excel_calendar_roster import generate_calendar_roster_excel  # 【v1.1 新增】日曆式更表生成
-from .holiday_utils import get_holiday_name, is_holiday, HONG_KONG_HOLIDAYS
-from .theme import get_theme_css, get_theme_colors, DARK_THEME, LIGHT_THEME
-
-__all__ = [
-    'generate_ics_content',
-    'generate_excel_v6',
-    'generate_calendar_roster_excel',  # 【v1.1 新增】
-    'get_holiday_name',
-    'is_holiday',
-    'HONG_KONG_HOLIDAYS',
-    'get_theme_css',
-    'get_theme_colors',
-    'DARK_THEME',
-    'LIGHT_THEME'
-]
+__all__ = ['login_page', 'change_password_ui', 'admin_view', 'pt_view', 'ft_view', 'get_theme_css']

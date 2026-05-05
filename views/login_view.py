@@ -6,7 +6,8 @@ Login Page Module
 
 import streamlit as st
 import database as db
-from config import CONFIG
+# 修改這裡：從新位置 config.settings 導入 CONFIG
+from config.settings import CONFIG 
 
 
 def change_password_ui():
@@ -18,7 +19,9 @@ def change_password_ui():
             new_p = st.text_input("輸入新密碼", type="password")
             confirm_p = st.text_input("確認新密碼", type="password")
             if st.form_submit_button("確認修改"):
-                user = db.verify_user(st.session_state.username, old_p)
+                # 從 session_state 獲取當前用戶
+                username = st.session_state.get('username')
+                user = db.verify_user(username, old_p)
                 if not user:
                     st.error("❌ 舊密碼錯誤")
                 elif new_p != confirm_p:
@@ -26,14 +29,15 @@ def change_password_ui():
                 elif len(new_p) < 4:
                     st.error("❌ 密碼太短")
                 else:
-                    db.update_password(st.session_state.username, new_p)
+                    db.update_password(username, new_p)
                     st.success("✅ 密碼修改成功！")
 
 
 def login_page():
     """渲染登入頁面"""
-    st.title(f"📅 {CONFIG['SYSTEM_NAME']}")
-    st.subheader(f"請登入系統 (Ver: {CONFIG['VERSION']})")
+    # 從 CONFIG 獲取系統名稱[cite: 9]
+    st.title(f"📅 {CONFIG.get('SYSTEM_NAME', '火星殖民計劃')}")
+    st.subheader(f"請登入系統 (Ver: {CONFIG.get('VERSION', 'Unknown')})")
     
     if 'login_attempts' not in st.session_state:
         st.session_state.login_attempts = 0
@@ -46,14 +50,14 @@ def login_page():
         u = st.text_input("用戶名稱 (Username)").strip().lower()
         p = st.text_input("密碼 (Password)", type="password").strip()
         
-        if st.form_submit_button("登入系統"):
+        if st.form_submit_button("登入系統", use_container_width=True):
             if not u or not p:
                 st.warning("請輸入用戶名稱和密碼")
                 return
             try:
                 user = db.verify_user(u, p)
                 if user:
-                    st.session_state.logged_in = True
+                    st.session_state.authenticated = True # 改為與 main.py 一致的 key
                     st.session_state.username = user["username"]
                     st.session_state.role = user["role"]
                     st.session_state.login_attempts = 0
