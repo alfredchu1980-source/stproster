@@ -8,6 +8,7 @@ import pandas as pd
 # --- 初始化連線 ---
 def init_connection():
     try:
+        # 注意：這裡使用大寫的 SUPABASE_URL，請確保與您 Streamlit secrets 設定的大小寫一致
         url = st.secrets["SUPABASE_URL"].strip().rstrip('/')
         key = st.secrets["SUPABASE_KEY"].strip()
         return create_client(url, key)
@@ -49,38 +50,45 @@ def verify_user(username, password):
 def get_pt_attendance_records(username: str):
     """
     獲取特定 PT 員工的打卡歷史紀錄
-    用於 pt_view.py 第 107 行
+    【已徹底修正】：指向新表 attendance_logs，並根據 record_time 排序
     """
     try:
-        # 從 attendance 資料表抓取該用戶的數據，並按時間倒序排列
-        res = supabase.table("attendance").select("*").eq("username", username).order("timestamp", desc=True).execute()
+        # 從 attendance_logs 資料表抓取該用戶的數據，並按 record_time 倒序排列
+        res = supabase.table("attendance_logs").select("*").eq("username", username).order("record_time", desc=True).execute()
         return res.data if res.data else []
     except Exception as e:
         st.error(f"讀取打卡紀錄失敗: {e}")
         return []
 
-# 如果你的 pt_view 還有打卡功能，通常還會需要這個：
 def save_attendance(username: str, action_type: str, location: str = "Office"):
     """
     存儲打卡動作（上班/下班）
+    【已徹底修正】：對齊新的 attendance_logs 欄位格式，並整合時區模組
     """
+    from network_utils import get_hk_time_info, get_current_ip 
+    
     try:
+        # 抓取精準香港時間與 IP
+        record_date, hk_now, _ = get_hk_time_info()
+        current_ip = get_current_ip()
+        
         data = {
             "username": username,
-            "action": action_type, # 'Clock In' 或 'Clock Out'
-            "timestamp": datetime.now().isoformat(),
-            "location": location
+            "record_type": action_type,  # '上班' 或 '下班'
+            "record_date": record_date,
+            "record_time": hk_now.isoformat(),
+            "ip_address": current_ip if current_ip != "Loading" else location
         }
-        supabase.table("attendance").insert(data).execute()
+        supabase.table("attendance_logs").insert(data).execute()
         st.cache_data.clear() # 清除緩存以顯示最新紀錄
         return True
     except Exception as e:
-        st.error(f"打卡失敗: {e}")
+        st.error(f"打卡寫入系統失敗: {e}")
         return False
 
 def update_shift_status(shift_id, new_status):
     """
-    更新班次狀態 (Approved/Rejected/Cancelled)[cite: 2]
+    更新班次狀態 (Approved/Rejected/Cancelled)
     """
     try:
         supabase.table("pt_shifts").update({"status": new_status}).eq("id", shift_id).execute()
@@ -91,7 +99,7 @@ def update_shift_status(shift_id, new_status):
 # --- FT 請假核心功能 ---
 @st.cache_data(ttl=60)
 def get_all_ft_leave_applications(status=None):
-    """獲取全職人員請假申請[cite: 2]"""
+    """獲取全職人員請假申請"""
     try:
         query = supabase.table("ft_leaves").select("*")
         if status:
@@ -124,7 +132,7 @@ def get_user_ft_leaves(username):
 def get_all_shifts(exclude_cancelled=False):
     """
     獲取所有排班紀錄 (供管理員日曆與報表使用)
-    對應 admin_view.py 第 16 行的呼叫
+    對應 admin_view.py 的呼叫
     """
     try:
         # 從 Supabase 讀取 pt_shifts 資料表
