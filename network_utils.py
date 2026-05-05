@@ -1,37 +1,47 @@
 import streamlit as st
 import requests
 
-def get_current_ip():
-    """獲取目前設備連網的公網 IP"""
-    # 嘗試抓取各種可能的前端標頭
+def get_full_ip_info():
+    """獲取所有經過的 IP 節點資訊 (不切斷，保留完整名單)"""
+    ip_info = ""
     try:
         if hasattr(st, "context") and hasattr(st.context, "headers"):
             headers = st.context.headers
+            # 抓取完整的 X-Forwarded-For 字串
             if "X-Forwarded-For" in headers:
-                return headers["X-Forwarded-For"].split(',')[0].strip()
-            elif "X-Real-Ip" in headers:
-                return headers["X-Real-Ip"].strip()
+                ip_info += headers["X-Forwarded-For"]
+            if "X-Real-Ip" in headers:
+                ip_info += ", " + headers["X-Real-Ip"]
     except:
         pass
 
-    # 如果雲端抓不到，退回本機模式
-    try:
-        return requests.get('https://api.ipify.org', timeout=5).text
-    except:
-        return "Unknown"
+    # 備用方案：本地模式
+    if not ip_info:
+        try:
+            ip_info = requests.get('https://api.ipify.org', timeout=5).text
+        except:
+            ip_info = "Unknown"
+            
+    return ip_info
 
 def is_on_company_wifi():
-    """檢查目前 IP 是否為公司固定 IP"""
+    """檢查目前 IP 是否包含公司固定 IP"""
     COMPANY_IP = "210.17.224.155" 
-    current_ip = get_current_ip()
+    full_ip_info = get_full_ip_info()
+    
+    # 🎯 終極邏輯：只要這一長串 IP 裡面「包含」公司的 IP，就判定為在公司內！
+    is_valid = COMPANY_IP in full_ip_info
     
     # ======= 🚨 核心除錯雷達 🚨 =======
-    # 這會在您的網頁上強制顯示黃色和藍色的提示框，讓您看清真相
-    st.warning(f"🔧 [雷達偵測] 系統目前抓到您的 IP 是： {current_ip}")
-    st.info(f"🎯 [目標座標] 公司設定的 WIFI IP 是： {COMPANY_IP}")
+    # 讓我們看看這次抓到了多長的字串
+    st.warning(f"🔧 [雷達完整報告] 系統抓到的完整名單： {full_ip_info}")
+    if is_valid:
+        st.success("✅ 成功辨識為公司網路！打卡系統已解鎖。")
+    else:
+        st.error("❌ 仍未找到公司 IP，目前視為外部網路。")
     # ==================================
     
-    return current_ip == COMPANY_IP
+    return is_valid
 
 def get_theme_css():
     return """
