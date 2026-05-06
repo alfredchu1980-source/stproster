@@ -5,6 +5,26 @@ import os
 import streamlit as st
 from database import supabase
 from io import BytesIO
+import sys
+
+# ==========================================
+# 【戰術追加】強行修正環境路徑，解決 No module named 'openpyxl'
+# ==========================================
+def force_fix_paths():
+    extra_paths = [
+        r"C:\Users\USER\AppData\Local\Programs\Python\Python314\Lib\site-packages",
+        r"C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages"
+    ]
+    for p in extra_paths:
+        if os.path.exists(p) and p not in sys.path:
+            sys.path.append(p)
+
+# 執行路徑修復
+force_fix_paths()
+
+# ==========================================
+# 原始備份邏輯[cite: 1]
+# ==========================================
 
 def run_auto_backup():
     """靜默同步：將雲端數據存入本地 C 槽"""
@@ -24,13 +44,19 @@ def run_auto_backup():
 
 def _save_supabase_to_excel(target):
     """核心邏輯：從 Supabase 抓取多個表並整合進 Excel"""
-    # 根據你的 database.py 定義要備份的表[cite: 1]
+    # 確認 engine 使用 openpyxl
     tables = ["users", "pt_shifts", "attendance_logs", "ft_leaves"]
-    with pd.ExcelWriter(target, engine='openpyxl') as writer:
-        for table in tables:
-            res = supabase.table(table).select("*").execute()
-            if res.data:
-                pd.DataFrame(res.data).to_excel(writer, sheet_name=table, index=False)
+    try:
+        # 強制在寫入前檢查一次 openpyxl 是否可用
+        import openpyxl 
+        with pd.ExcelWriter(target, engine='openpyxl') as writer:
+            for table in tables:
+                res = supabase.table(table).select("*").execute()
+                if res.data:
+                    pd.DataFrame(res.data).to_excel(writer, sheet_name=table, index=False)
+    except ImportError:
+        st.error("系統內部錯誤：依然無法載入 openpyxl 引擎，請聯繫管理員檢查路徑。")
+        raise
 
 def settings_backup_ui():
     """管理員『系統設定』分頁專用 UI"""
@@ -40,7 +66,6 @@ def settings_backup_ui():
     st.caption("將雲端資料同步至：`C:\\wifi_gemini\\data_backup`")
     if st.button("🔄 立即同步至本地 C 槽", use_container_width=True):
         try:
-            # 這裡我們強行產生一個帶時間戳的檔案，確保每次按都有反應
             now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
             path = r'C:\wifi_gemini\data_backup'
             if not os.path.exists(path): os.makedirs(path)
