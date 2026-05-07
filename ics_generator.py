@@ -1,75 +1,61 @@
 # -*- coding: utf-8 -*-
 """
-ICS 行事曆生成模組
-ICS Calendar Generator Module
+ICS 日曆檔案生成模組 (已針對 Apple & Google Calendar 嚴格校準格式)
 """
+import datetime
 
-from datetime import datetime
-from typing import List, Dict
-
-
-def generate_ics_content(username: str, accepted_shifts: List[Dict], system_name: str) -> str:
+def generate_ics_content(username, shifts_data, system_name):
     """
-    生成 ICS 行事曆內容
-    
-    Args:
-        username: 用戶名稱
-        accepted_shifts: 已接受的班表列表
-        system_name: 系統名稱
-    
-    Returns:
-        ICS 格式的字串內容
+    將已核准的班次轉換為 iCalendar (.ics) 格式
     """
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//{}//Shift Calendar//EN".format(system_name),
+        f"PRODID:-//{system_name}//TW",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
-        "X-WR-CALNAME:{} - {} 班表".format(system_name, username),
-        "X-WR-TIMEZONE:Asia/Hong_Kong",
     ]
     
-    for shift in accepted_shifts:
-        shift_date = shift.get('shift_date', '')
-        slots = shift.get('slots', [])
+    for idx, shift in enumerate(shifts_data):
+        date_str = shift.get("shift_date")
+        if not date_str:
+            continue
+            
+        slots = shift.get("slots", [])
         
+        # 容錯處理：將陣列轉換為易讀字串
         if isinstance(slots, list):
             slots_str = ", ".join(slots)
         else:
             slots_str = str(slots)
-        
+            
+        # 🚀 關鍵修復 1：計算正確的結束日期 (DTEND 必須是全天事件的隔一天)
         try:
-            dt = datetime.strptime(shift_date, "%Y-%m-%d")
-            dt_start = dt.strftime("%Y%m%d")
+            start_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            end_date = start_date + datetime.timedelta(days=1)
             
-            if "早班" in slots:
-                time_start = "090000"
-                time_end = "140000"
-            elif "中班" in slots:
-                time_start = "140000"
-                time_end = "180000"
-            elif "晚班" in slots:
-                time_start = "180000"
-                time_end = "230000"
-            else:
-                time_start = "090000"
-                time_end = "170000"
+            dtstart = start_date.strftime("%Y%m%d")
+            dtend = end_date.strftime("%Y%m%d")
+        except ValueError:
+            continue  # 若資料庫中有殘缺日期，安全跳過
             
-            lines.extend([
-                "BEGIN:VEVENT",
-                "UID:{}-{}@shifts".format(shift_date, username),
-                "DTSTAMP:{}".format(datetime.now().strftime("%Y%m%dT%H%M%SZ")),
-                "DTSTART;VALUE=DATE:{}".format(dt_start),
-                "DTEND;VALUE=DATE:{}".format(dt_start),
-                "SUMMARY:{} - {}".format(system_name, slots_str),
-                "DESCRIPTION:用戶：{}\\n時段：{}\\n狀態：Accepted".format(username, slots_str),
-                "STATUS:CONFIRMED",
-                "TRANSP:TRANSPARENT",
-                "END:VEVENT",
-            ])
-        except Exception as e:
-            continue
-    
+        now_utc = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        
+        lines.extend([
+            "BEGIN:VEVENT",
+            f"UID:shift_{username}_{dtstart}_{idx}@marscolony",
+            f"DTSTAMP:{now_utc}",
+            f"DTSTART;VALUE=DATE:{dtstart}",
+            f"DTEND;VALUE=DATE:{dtend}",  # 👈 滿足手機日曆的嚴格要求
+            f"SUMMARY:上班 - {slots_str}",
+            f"DESCRIPTION:由 {system_name} 自動同步的班次。時段：{slots_str}",
+            "END:VEVENT"
+        ])
+        
     lines.append("END:VCALENDAR")
-    return "\r\n".join(lines)
+    
+    # 🚀 關鍵修復 2：嚴格遵守 ICS 的 \r\n 換行，並在最結尾補上空行
+    ics_string = "\r\n".join(lines) + "\r\n"
+    
+    # 🚀 關鍵修復 3：轉換為 UTF-8 bytes 二進位格式，避免 Streamlit 下載時被瀏覽器破壞格式
+    return ics_string.encode('utf-8')
