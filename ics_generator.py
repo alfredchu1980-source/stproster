@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ICS 日曆檔案生成模組 (已針對 Apple & Google Calendar 嚴格校準格式)
+ICS 行事曆生成模組 (完美繼承舊版高相容性設定)
 """
 import datetime
 
@@ -11,9 +11,11 @@ def generate_ics_content(username, shifts_data, system_name):
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        f"PRODID:-//{system_name}//TW",
+        f"PRODID:-//{system_name}//Shift Calendar//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
+        f"X-WR-CALNAME:{system_name} - {username} 班表",
+        "X-WR-TIMEZONE:Asia/Hong_Kong",
     ]
     
     for idx, shift in enumerate(shifts_data):
@@ -22,40 +24,26 @@ def generate_ics_content(username, shifts_data, system_name):
             continue
             
         slots = shift.get("slots", [])
+        slots_str = ", ".join(slots) if isinstance(slots, list) else str(slots)
         
-        # 容錯處理：將陣列轉換為易讀字串
-        if isinstance(slots, list):
-            slots_str = ", ".join(slots)
-        else:
-            slots_str = str(slots)
-            
-        # 🚀 關鍵修復 1：計算正確的結束日期 (DTEND 必須是全天事件的隔一天)
-        try:
-            start_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-            end_date = start_date + datetime.timedelta(days=1)
-            
-            dtstart = start_date.strftime("%Y%m%d")
-            dtend = end_date.strftime("%Y%m%d")
-        except ValueError:
-            continue  # 若資料庫中有殘缺日期，安全跳過
-            
+        # 轉換日期格式為 YYYYMMDD
+        dt_start = date_str.replace("-", "")
         now_utc = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
         
         lines.extend([
             "BEGIN:VEVENT",
-            f"UID:shift_{username}_{dtstart}_{idx}@marscolony",
+            f"UID:{date_str}-{username}-{idx}@shifts",
             f"DTSTAMP:{now_utc}",
-            f"DTSTART;VALUE=DATE:{dtstart}",
-            f"DTEND;VALUE=DATE:{dtend}",  # 👈 滿足手機日曆的嚴格要求
-            f"SUMMARY:上班 - {slots_str}",
-            f"DESCRIPTION:由 {system_name} 自動同步的班次。時段：{slots_str}",
+            f"DTSTART;VALUE=DATE:{dt_start}",
+            f"DTEND;VALUE=DATE:{dt_start}",
+            f"SUMMARY:{system_name} - {slots_str}",
+            f"DESCRIPTION:用戶：{username}\\n時段：{slots_str}\\n狀態：Accepted",
+            "STATUS:CONFIRMED",
+            "TRANSP:TRANSPARENT",
             "END:VEVENT"
         ])
         
     lines.append("END:VCALENDAR")
     
-    # 🚀 關鍵修復 2：嚴格遵守 ICS 的 \r\n 換行，並在最結尾補上空行
-    ics_string = "\r\n".join(lines) + "\r\n"
-    
-    # 🚀 關鍵修復 3：轉換為 UTF-8 bytes 二進位格式，避免 Streamlit 下載時被瀏覽器破壞格式
-    return ics_string.encode('utf-8')
+    # 恢復為舊版成功的字串回傳模式，讓 Streamlit 自動處理編碼
+    return "\r\n".join(lines)
