@@ -48,7 +48,6 @@ def pt_view(role):
         shift_slots = list(CONFIG.get("SLOTS", {}).keys())
         selected_shifts = st.multiselect("選擇時段 (1-3 個)", shift_slots)
         
-        # 依據不同模式動態顯示 UI 元件
         if date_mode == "單一日期":
             d = st.date_input("日期", datetime.date.today(), key="single_date")
         elif date_mode == "連續日期":
@@ -59,13 +58,11 @@ def pt_view(role):
             weekdays = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
             selected_days = st.multiselect("選擇星期 (自動排班至本月底)", weekdays)
 
-        # 提交按鈕邏輯分流 (傳遞純 List 陣列)
         if st.button("確認提交", use_container_width=True):
             if not selected_shifts:
                 st.error("❌ 請至少選擇一個時段")
             elif date_mode == "單一日期":
                 date_str = d.strftime("%Y-%m-%d")
-                # 防重複報班攔截
                 if db.check_shift_exists(st.session_state.username, date_str):
                     st.error(f"❌ 您在 {date_str} 已經有報更紀錄，請勿重複提交。")
                 else:
@@ -94,7 +91,24 @@ def pt_view(role):
         st.subheader("📜 歷史紀錄")
         att_logs = db.get_pt_attendance_records(st.session_state.username)
         if att_logs:
-            st.dataframe(pd.DataFrame(att_logs)[['record_date', 'record_type', 'record_time']], use_container_width=True)
+            df_att = pd.DataFrame(att_logs)
+            df_att['record_time'] = pd.to_datetime(df_att['record_time'])
+            
+            # 🚀 從 settings.py 集中獲取時區與格式設定
+            tz = CONFIG.get("TIMEZONE", "Asia/Hong_Kong")
+            t_fmt = CONFIG.get("TIME_FORMAT", "%H:%M:%S")
+            
+            if df_att['record_time'].dt.tz is None:
+                df_att['record_time'] = df_att['record_time'].dt.tz_localize('UTC')
+            
+            df_att['本地時間'] = df_att['record_time'].dt.tz_convert(tz).dt.strftime(t_fmt)
+            
+            display_df = df_att[['record_date', 'record_type', '本地時間']].copy()
+            display_df.columns = ['日期', '類型', f'時間 ({tz.split("/")[-1]})']
+            
+            st.dataframe(display_df, use_container_width=True, hide_index=True)
+        else:
+            st.info("💡 尚無打卡紀錄")
         
         accepted = db.get_user_accepted_shifts(st.session_state.username)
         if accepted:
