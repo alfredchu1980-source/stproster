@@ -8,6 +8,10 @@ CONFIG = {
     "VERSION": "v5.2.0-MODULAR",
     "DEBUG": True,
     
+    # --- 新增：全域時區與時間格式統一設定 ---
+    "TIMEZONE": "Asia/Hong_Kong",
+    "TIME_FORMAT": "%H:%M:%S",
+    
     # 報更相關設定
     "MAX_DAYS_PER_WEEK": 6,
     "SHIFT_CONTINUOUS_MAX": 7,
