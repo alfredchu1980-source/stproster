@@ -21,6 +21,12 @@ def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
 
+    # 🚨 防呆保險絲：防止 Streamlit 熱重載造成的「幽靈狀態」(Session 遺失變數)
+    # 如果系統判定已登入，但卻遺失了 username 或 role，強制將使用者踢回登入頁面
+    if st.session_state.authenticated and ('username' not in st.session_state or 'role' not in st.session_state):
+        st.session_state.authenticated = False
+        st.warning("🔄 系統已更新或暫存已重置，請重新登入以確保連線穩定。")
+
     # 3. 登入防護與渲染：未登入時只顯示登入頁面
     if not st.session_state.authenticated:
         show_login()
