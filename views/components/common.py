@@ -2,6 +2,7 @@
 import streamlit as st
 import database as db
 from config.settings import CONFIG
+from ics_generator import generate_ics_content
 
 def render_user_profile_card(username, role):
     """側邊欄用戶資訊卡片"""
@@ -42,3 +43,18 @@ def change_password_ui():
                 else:
                     db.update_password(username, new_p)
                     st.success("✅ 密碼修改成功！")
+
+def render_ics_download_button(username, accepted_shifts):
+    """
+    共用 UI 元件：渲染「下載 ICS 到手機日曆」的按鈕。
+    只需傳入使用者名稱與已核准的班次清單即可。
+    """
+    if accepted_shifts:
+        ics = generate_ics_content(username, accepted_shifts, CONFIG.get("SYSTEM_NAME"))
+        st.download_button(
+            label="📅 下載班表到手機日曆 (ICS)", 
+            data=ics, 
+            file_name="shifts.ics", 
+            mime="text/calendar",
+            use_container_width=True
+        )
