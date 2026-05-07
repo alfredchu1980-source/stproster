@@ -15,7 +15,7 @@ def pt_view(role):
     st.title(f"Welcome {st.session_state.username} 🚀")
     st.divider()
 
-    # --- 考勤系統 ---
+    # --- 考勤系統 (加入防連點與視覺回饋) ---
     on_wifi = is_on_company_wifi() 
     current_ip = get_current_ip() 
 
@@ -24,16 +24,18 @@ def pt_view(role):
         c1, c2 = st.columns(2)
         with c1:
             if st.button("🔴 上班打卡", use_container_width=True):
-                if db.save_attendance(st.session_state.username, "上班"):
-                    st.success("✅ 上班打卡成功！")
-                    time.sleep(1)
-                    st.rerun()
+                with st.spinner("正在驗證座標與時間..."):
+                    if db.save_attendance(st.session_state.username, "上班"):
+                        st.success("✅ 上班打卡成功！")
+                        time.sleep(1)
+                        st.rerun()
         with c2:
             if st.button("🔵 下班打卡", use_container_width=True):
-                if db.save_attendance(st.session_state.username, "下班"):
-                    st.success("✅ 下班辛苦了！")
-                    time.sleep(1)
-                    st.rerun()
+                with st.spinner("正在驗證座標與時間..."):
+                    if db.save_attendance(st.session_state.username, "下班"):
+                        st.success("✅ 下班辛苦了！")
+                        time.sleep(1)
+                        st.rerun()
     else:
         st.warning("⚠️ 請連接公司 WIFI 以進行打卡")
 
@@ -45,25 +47,55 @@ def pt_view(role):
         date_mode = st.radio("模式", ["單一日期", "連續日期", "逢星期重複"], horizontal=True)
         shift_slots = list(CONFIG.get("SLOTS", {}).keys())
         selected_shifts = st.multiselect("選擇時段 (1-3 個)", shift_slots)
-        shift_str = ",".join(selected_shifts)
+        
+        # 依據不同模式動態顯示 UI 元件
+        if date_mode == "單一日期":
+            d = st.date_input("日期", datetime.date.today(), key="single_date")
+        elif date_mode == "連續日期":
+            c1, c2 = st.columns(2)
+            start_d = c1.date_input("開始日期", datetime.date.today())
+            end_d = c2.date_input("結束日期", datetime.date.today())
+        elif date_mode == "逢星期重複":
+            weekdays = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+            selected_days = st.multiselect("選擇星期 (自動排班至本月底)", weekdays)
 
+        # 提交按鈕邏輯分流 (傳遞純 List 陣列)
         if st.button("確認提交", use_container_width=True):
             if not selected_shifts:
                 st.error("❌ 請至少選擇一個時段")
             elif date_mode == "單一日期":
-                d = st.date_input("日期", datetime.date.today(), key="single_date")
-                db.save_shift(st.session_state.username, d.strftime("%Y-%m-%d"), f"WORK: {shift_str}")
-                st.success("✅ 提交成功")
-            # 其他模式比照辦理...
+                date_str = d.strftime("%Y-%m-%d")
+                # 防重複報班攔截
+                if db.check_shift_exists(st.session_state.username, date_str):
+                    st.error(f"❌ 您在 {date_str} 已經有報更紀錄，請勿重複提交。")
+                else:
+                    db.save_shift(st.session_state.username, date_str, selected_shifts)
+                    st.success("✅ 單日報班提交成功！")
+                    time.sleep(1)
+                    st.rerun()
+            elif date_mode == "連續日期":
+                res = process_continuous_shift(st.session_state.username, start_d, end_d, selected_shifts)
+                if res["success"]:
+                    st.success(res["message"])
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error(res["message"])
+            elif date_mode == "逢星期重複":
+                res = process_weekly_repeat_shift(st.session_state.username, selected_days, selected_shifts)
+                if res["success"]:
+                    st.success(res["message"])
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error(res["message"])
 
     with tab2:
         st.subheader("📜 歷史紀錄")
-        # 顯示最近打卡
         att_logs = db.get_pt_attendance_records(st.session_state.username)
         if att_logs:
             st.dataframe(pd.DataFrame(att_logs)[['record_date', 'record_type', 'record_time']], use_container_width=True)
         
-        # 顯示 ICS 下載
         accepted = db.get_user_accepted_shifts(st.session_state.username)
         if accepted:
             ics = generate_ics_content(st.session_state.username, accepted, CONFIG.get("SYSTEM_NAME"))
