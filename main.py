@@ -1,134 +1,56 @@
-# main.py
+# -*- coding: utf-8 -*-
 import streamlit as st
-import database as db
-from config import CONFIG
-from ui_components import show_login
-from warehouse_v70 import show_warehouse_tab
-from client_portal import show_client_portal
-from office_admin import show_office_admin
-from tv_dashboard import show_tv_dashboard
-from datetime import datetime, timedelta
 
-st.set_page_config(page_title=CONFIG["SYSTEM_NAME"], layout="wide")
+# ==========================================
+# 🧩 模組導入區 (已修正路徑，對接 views 架構)
+# ==========================================
+from views import login_view, admin_view, pt_view, ft_view
+from views.components.common import render_user_profile_card, get_sidebar_footer
+from views.login_view import login_page as show_login
 
-st.markdown("""
-    <style>
-    .stApp { background-color: #0e1117 !important; color: #ffffff !important; }
-    .stTextInput>div>div>input { background-color: #262730 !important; color: white !important; border: 1px solid #4a4a4a !important; }
-    [data-testid="stSidebar"] { background-color: #161b22 !important; }
-    </style>
-    """, unsafe_allow_html=True)
+def main():
+    # 1. 系統全域設定
+    st.set_page_config(
+        page_title="火星殖民地排班系統",
+        page_icon="🚀",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
 
-db.init_database()
+    # 2. 初始化登入狀態
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
 
-if 'logged_in' not in st.session_state: st.session_state.logged_in = False
-if 'ui_mode' not in st.session_state: st.session_state.ui_mode = "電腦模式"
-if 'login_time' not in st.session_state: st.session_state.login_time = None
+    # 3. 登入防護與渲染：未登入時只顯示登入頁面
+    if not st.session_state.authenticated:
+        show_login()
+        return
 
-# 登入逾時檢查（60 分鐘，alfred 賬戶除外）
-if st.session_state.logged_in and st.session_state.login_time:
-    elapsed = datetime.now() - st.session_state.login_time
-    # 檢查是否為 alfred 賬戶（不区分大小寫）
-    is_alfred = st.session_state.username.lower() == "alfred" if st.session_state.username else False
-    # 非 alfred 賬戶且超過 60 分鐘則強制登出
-    if not is_alfred and elapsed > timedelta(minutes=60):
-        st.warning("⚠️ 登入已逾時，請重新登入")
-        st.session_state.logged_in = False
-        st.session_state.login_time = None
-        st.rerun()
-
-if not st.session_state.logged_in:
-    show_login()
-else:
-    # 初始化 menu 變量
-    menu = None
-    badge = ""
+    # 4. 已登入：讀取角色與用戶名
+    role = st.session_state.get('role', 'PT').upper()
+    username = st.session_state.get('username', 'User')
     
+    # 5. 側邊欄渲染 (共用元件)
     with st.sidebar:
-        st.title(f"🏢 {CONFIG['SYSTEM_NAME']}")
-        st.caption(CONFIG["VERSION"])
-        st.success(f"👤 登入：{st.session_state.username}")
-        
-        if st.session_state.login_time:
-            st.caption(f"登入時間：{st.session_state.login_time.strftime('%H:%M:%S')}")
-        
+        render_user_profile_card(username, role)
         st.divider()
-        
-        user_role = st.session_state.role
-        
-        # 確保角色名稱正確（大小寫不敏感）
-        role_check = user_role.lower() if user_role else ""
-        
-        if role_check == "admin":
-            pending_count = db.get_pending_count()
-            badge = f"🔴 {pending_count}" if pending_count > 0 else ""
-            menu = st.radio("功能菜單", [
-                "📦 倉庫端 (V70 核心)", 
-                f"📩 客戶端預報 {badge}", 
-                "📋 秘書台", 
-                "📺 電視看板"
-            ], label_visibility="collapsed")
-        elif role_check == "customer":
-            pending_count = db.get_pending_count()
-            badge = f"🔴 {pending_count}" if pending_count > 0 else ""
-            menu = st.radio("功能菜單", [
-                f"📩 客戶端預報 {badge}"
-            ], label_visibility="collapsed")
-        else:
-            menu = st.radio("功能菜單", [
-                "📦 倉庫端 (V70 核心)"
-            ], label_visibility="collapsed")
-        
-        st.divider()
-        
-        # 📚 參考表模組掛載點（Option B+）- 僅 Admin 可見
-        try:
-            from hooks import REFERENCE_MODULE_ENABLED, REFERENCE_SHOW_IN_SIDEBAR, check_module_installation
-            
-            if role_check == "admin" and REFERENCE_MODULE_ENABLED and REFERENCE_SHOW_IN_SIDEBAR:
-                # 檢查模組安裝狀態
-                install_status = check_module_installation()
-                
-                if install_status['installed']:
-                    # 模組已正確安裝，顯示上傳按鈕
-                    from reference_module import render_reference_uploader
-                    render_reference_uploader(location="sidebar")
-                    st.divider()
-                else:
-                    # 模組未正確安裝，顯示警告
-                    with st.expander("⚠️ 參考表模組未安裝", expanded=True):
-                        st.error("📚 參考表模組未正確安裝")
-                        for error in install_status['errors']:
-                            st.error(f"❌ {error}")
-                        for warning in install_status['warnings']:
-                            st.warning(f"⚠️ {warning}")
-                        st.caption("💡 請聯繫系統管理員安裝參考表模組")
-                    st.divider()
-                    
-        except ImportError as e:
-            # hooks.py 不存在
-            if role_check == "admin":
-                with st.expander("⚠️ 參考表模組未安裝", expanded=True):
-                    st.error(f"📚 hooks.py 未找到：{e}")
-                    st.caption("💡 請聯繫系統管理員安裝參考表模組")
-                st.divider()
-        
-        st.session_state.ui_mode = st.radio("🖥️ 介面佈局", ["電腦模式", "手機模式"], index=0 if st.session_state.ui_mode == "電腦模式" else 1)
-        
-        st.divider()
-        
-        from ui_components import render_user_management
-        render_user_management()
-        
-        # 注意：登出按鈕已移至 warehouse_v70.py（僅倉庫端需要）
-    
-    # 根據選單顯示頁面
-    if menu:
-        if menu == "📦 倉庫端 (V70 核心)":
-            show_warehouse_tab()
-        elif menu == f"📩 客戶端預報 {badge}":
-            show_client_portal()
-        elif menu == "📋 秘書台":
-            show_office_admin()
-        elif menu == "📺 電視看板":
-            show_tv_dashboard()
+        if st.button("🚪 登出系統", use_container_width=True):
+            # 登出時清除所有狀態，確保資訊安全
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.session_state.authenticated = False
+            st.rerun()
+        st.markdown(get_sidebar_footer(), unsafe_allow_html=True)
+
+    # 6. 核心視圖分流 (View Routing)
+    if role == "ADMIN":
+        admin_view.admin_view()
+    elif role in ["PT", "PICKER", "PACKER"]:
+        pt_view.pt_view(role=role) 
+    elif role == "FT":
+        ft_view.ft_view()
+    else:
+        st.error(f"⚠️ 系統錯誤：找不到對應的系統權限 ({role})，請聯絡管理員。")
+
+if __name__ == "__main__":
+    main()
