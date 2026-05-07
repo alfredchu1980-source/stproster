@@ -47,7 +47,7 @@ def save_shift(username, date_str, shift_info):
         data = {
             "username": username,
             "shift_date": date_str,
-            "shift_type": shift_info,
+            "slots": shift_info,
             "status": "Pending"
         }
         return supabase.table("pt_shifts").insert(data).execute()
