@@ -5,11 +5,10 @@ import database as db
 import pandas as pd
 import time
 from config.settings import CONFIG
-from views.components.common import change_password_ui
+from views.components.common import change_password_ui, render_ics_download_button
 from network_utils import is_on_company_wifi, get_current_ip
 from logic.pt_logic import process_continuous_shift, process_weekly_repeat_shift
 from holiday_utils import get_holiday_name, is_holiday
-from ics_generator import generate_ics_content
 
 def pt_view(role):
     st.title(f"Welcome {st.session_state.username} 🚀")
@@ -94,7 +93,6 @@ def pt_view(role):
             df_att = pd.DataFrame(att_logs)
             df_att['record_time'] = pd.to_datetime(df_att['record_time'])
             
-            # 🚀 從 settings.py 集中獲取時區與格式設定
             tz = CONFIG.get("TIMEZONE", "Asia/Hong_Kong")
             t_fmt = CONFIG.get("TIME_FORMAT", "%H:%M:%S")
             
@@ -110,10 +108,11 @@ def pt_view(role):
         else:
             st.info("💡 尚無打卡紀錄")
         
+        # 🚀 呼叫共用元件生成日曆下載按鈕
+        st.divider()
+        st.subheader("📅 日曆同步")
         accepted = db.get_user_accepted_shifts(st.session_state.username)
-        if accepted:
-            ics = generate_ics_content(st.session_state.username, accepted, CONFIG.get("SYSTEM_NAME"))
-            st.download_button("📅 下載班表到手機日曆 (ICS)", data=ics, file_name="shifts.ics", mime="text/calendar")
+        render_ics_download_button(st.session_state.username, accepted)
 
     with tab3:
         change_password_ui()

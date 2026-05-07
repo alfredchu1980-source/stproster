@@ -5,6 +5,7 @@ import time
 from config.settings import CONFIG, FT_LEAVE_TYPES
 import database as db
 from network_utils import is_on_company_wifi, get_current_ip
+from views.components.common import render_ics_download_button
 
 def ft_view():
     st.title(f"👔 全職：{st.session_state.username}")
@@ -59,7 +60,6 @@ def ft_view():
             df_att = pd.DataFrame(att_logs)
             df_att['record_time'] = pd.to_datetime(df_att['record_time'])
             
-            # 🚀 從 settings.py 集中獲取時區與格式設定
             tz = CONFIG.get("TIMEZONE", "Asia/Hong_Kong")
             t_fmt = CONFIG.get("TIME_FORMAT", "%H:%M:%S")
             
@@ -74,3 +74,9 @@ def ft_view():
             st.dataframe(display_df, use_container_width=True, hide_index=True)
         else:
             st.info("💡 尚無打卡紀錄")
+            
+        # 🚀 呼叫共用元件生成日曆下載按鈕
+        st.divider()
+        st.subheader("📅 日曆同步")
+        accepted = db.get_user_accepted_shifts(st.session_state.username)
+        render_ics_download_button(st.session_state.username, accepted)
