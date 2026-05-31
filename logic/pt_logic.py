@@ -41,10 +41,10 @@ def process_continuous_shift(username, start, end, shift_list):
     except Exception as e:
         return {"success": False, "message": f"❌ 資料庫寫入時發生異常: {str(e)}"}
 
-def process_weekly_repeat_shift(username, selected_days, shift_list):
+def process_weekly_repeat_shift(username, selected_days, shift_str):
     """
-    PT/Picker/Packer 專用：處理逢星期重複上班報更 (自動填充至當月底)
-    具備重複檢查機制。
+    PT/Picker/Packer 專用：處理逢星期重複上班報更 
+    智能升級：若已超過當月 25 號，自動計算至「下個月月底」
     """
     if not selected_days:
         return {"success": False, "message": "❌ 請至少選擇一個星期！"}
@@ -55,36 +55,41 @@ def process_weekly_repeat_shift(username, selected_days, shift_list):
     }
     target_nums = [weekday_map[day] for day in selected_days]
     
-    today_obj = datetime.date.today()
-    if today_obj.month == 12:
-        last_day = datetime.date(today_obj.year, 12, 31)
+    curr = datetime.date.today()
+    
+    # 🌟 新增邏輯：判斷是否接近月底 (25號為界線)
+    if curr.day >= 25:
+        # 展延至下個月月底
+        if curr.month == 12:
+            target_month = 1
+            target_year = curr.year + 1
+        else:
+            target_month = curr.month + 1
+            target_year = curr.year
+            
+        if target_month == 12:
+            last_day = datetime.date(target_year, 12, 31)
+        else:
+            last_day = datetime.date(target_year, target_month + 1, 1) - datetime.timedelta(days=1)
     else:
-        last_day = datetime.date(today_obj.year, today_obj.month + 1, 1) - datetime.timedelta(days=1)
+        # 原本邏輯：計算至當月月底
+        if curr.month == 12:
+            last_day = datetime.date(curr.year, 12, 31)
+        else:
+            last_day = datetime.date(curr.year, curr.month + 1, 1) - datetime.timedelta(days=1)
     
-    curr = today_obj
-    success_count = 0
-    skip_count = 0
-    
+    count = 0
     try:
         while curr <= last_day:
             if curr.weekday() in target_nums:
-                date_str = curr.strftime("%Y-%m-%d")
-                if db.check_shift_exists(username, date_str):
-                    skip_count += 1
-                else:
-                    db.save_shift(username, date_str, shift_list)
-                    success_count += 1
+                # 標記為 WORK (上班)
+                db.save_shift(username, curr.strftime("%Y-%m-%d"), f"WORK: {shift_str}")
+                count += 1
             curr += datetime.timedelta(days=1)
             
-        if success_count == 0 and skip_count > 0:
-            return {"success": False, "message": "⚠️ 這些星期在月底前的日期皆已報更過，無新增紀錄。"}
-        elif success_count == 0:
-            return {"success": False, "message": "⚠️ 在本月剩餘的日子中，沒有符合所選星期的日期。"}
+        if count == 0:
+            return {"success": False, "message": "⚠️ 在計算區間內，沒有符合所選星期的日期。"}
             
-        msg = f"✅ 成功預約 {success_count} 個「{', '.join(selected_days)}」班次！"
-        if skip_count > 0:
-            msg += f" (已略過 {skip_count} 個重複的排班)"
-        return {"success": True, "message": msg}
-        
+        return {"success": True, "message": f"✅ 已成功為您預約了 {count} 個「{', '.join(selected_days)}」的班次！(計算至 {last_day.strftime('%Y-%m-%d')})"}
     except Exception as e:
-        return {"success": False, "message": f"❌ 批次排班寫入失敗: {str(e)}"}
+        return {"success": False, "message": f"❌ 批次寫入失敗: {str(e)}"}
