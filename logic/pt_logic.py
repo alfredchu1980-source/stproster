@@ -25,12 +25,13 @@ def process_continuous_shift(username, start, end, shift_list):
             if db.check_shift_exists(username, date_str):
                 skip_count += 1
             else:
+                # 🚀 直接傳入 shift_list 陣列，不加任何字串前綴
                 db.save_shift(username, date_str, shift_list)
                 success_count += 1
             curr += datetime.timedelta(days=1)
             
-        # 兼容處理：確保無論傳入 list 還是字串，都能正常顯示
-        shift_display = ", ".join(shift_list) if isinstance(shift_list, list) else shift_list
+        # 兼容處理：確保無論傳入 list 還是字串，都能正常顯示在提示訊息中
+        shift_display = ", ".join(shift_list) if isinstance(shift_list, list) else str(shift_list)
         
         if success_count == 0 and skip_count > 0:
              return {"success": False, "message": f"⚠️ 選取的 {skip_count} 天均已報更過，系統已自動攔截重複申請。"}
@@ -42,7 +43,7 @@ def process_continuous_shift(username, start, end, shift_list):
     except Exception as e:
         return {"success": False, "message": f"❌ 資料庫寫入時發生異常: {str(e)}"}
 
-def process_weekly_repeat_shift(username, selected_days, shift_str):
+def process_weekly_repeat_shift(username, selected_days, shift_list):
     """
     PT/Picker/Packer 專用：處理逢星期重複上班報更 
     智能升級：若已超過當月 25 號，自動計算至「下個月月底」
@@ -92,8 +93,8 @@ def process_weekly_repeat_shift(username, selected_days, shift_str):
                 if db.check_shift_exists(username, date_str):
                     skip_count += 1
                 else:
-                    # 標記為 WORK (上班) 並寫入
-                    db.save_shift(username, date_str, f"WORK: {shift_str}")
+                    # 🚀 直接傳入 shift_list 陣列，移除 WORK 字串
+                    db.save_shift(username, date_str, shift_list)
                     success_count += 1
                     
             curr += datetime.timedelta(days=1)
