@@ -29,7 +29,8 @@ def process_continuous_shift(username, start, end, shift_list):
                 success_count += 1
             curr += datetime.timedelta(days=1)
             
-        shift_display = ", ".join(shift_list)
+        # 兼容處理：確保無論傳入 list 還是字串，都能正常顯示
+        shift_display = ", ".join(shift_list) if isinstance(shift_list, list) else shift_list
         
         if success_count == 0 and skip_count > 0:
              return {"success": False, "message": f"⚠️ 選取的 {skip_count} 天均已報更過，系統已自動攔截重複申請。"}
@@ -45,6 +46,7 @@ def process_weekly_repeat_shift(username, selected_days, shift_str):
     """
     PT/Picker/Packer 專用：處理逢星期重複上班報更 
     智能升級：若已超過當月 25 號，自動計算至「下個月月底」
+    安全升級：具備重複檢查與跳過機制，避免重複預約同一天。
     """
     if not selected_days:
         return {"success": False, "message": "❌ 請至少選擇一個星期！"}
@@ -57,7 +59,7 @@ def process_weekly_repeat_shift(username, selected_days, shift_str):
     
     curr = datetime.date.today()
     
-    # 🌟 新增邏輯：判斷是否接近月底 (25號為界線)
+    # 🌟 判斷是否接近月底 (25號為界線)
     if curr.day >= 25:
         # 展延至下個月月底
         if curr.month == 12:
@@ -78,18 +80,33 @@ def process_weekly_repeat_shift(username, selected_days, shift_str):
         else:
             last_day = datetime.date(curr.year, curr.month + 1, 1) - datetime.timedelta(days=1)
     
-    count = 0
+    success_count = 0
+    skip_count = 0
+    
     try:
         while curr <= last_day:
             if curr.weekday() in target_nums:
-                # 標記為 WORK (上班)
-                db.save_shift(username, curr.strftime("%Y-%m-%d"), f"WORK: {shift_str}")
-                count += 1
+                date_str = curr.strftime("%Y-%m-%d")
+                
+                # 🛡️ 新增：檢查是否已存在紀錄，存在則跳過
+                if db.check_shift_exists(username, date_str):
+                    skip_count += 1
+                else:
+                    # 標記為 WORK (上班) 並寫入
+                    db.save_shift(username, date_str, f"WORK: {shift_str}")
+                    success_count += 1
+                    
             curr += datetime.timedelta(days=1)
             
-        if count == 0:
+        # 💡 判斷回傳訊息邏輯
+        if success_count == 0 and skip_count > 0:
+            return {"success": False, "message": f"⚠️ 找到 {skip_count} 個對應班次，但均已報更過，系統已自動攔截重複申請。"}
+        elif success_count == 0 and skip_count == 0:
             return {"success": False, "message": "⚠️ 在計算區間內，沒有符合所選星期的日期。"}
+        elif skip_count > 0:
+            return {"success": True, "message": f"✅ 成功預約 {success_count} 個「{', '.join(selected_days)}」班次！(另跳過 {skip_count} 天重複紀錄，計算至 {last_day.strftime('%Y-%m-%d')})"}
+        else:
+            return {"success": True, "message": f"✅ 已成功為您預約了 {success_count} 個「{', '.join(selected_days)}」的班次！(計算至 {last_day.strftime('%Y-%m-%d')})"}
             
-        return {"success": True, "message": f"✅ 已成功為您預約了 {count} 個「{', '.join(selected_days)}」的班次！(計算至 {last_day.strftime('%Y-%m-%d')})"}
     except Exception as e:
         return {"success": False, "message": f"❌ 批次寫入失敗: {str(e)}"}
