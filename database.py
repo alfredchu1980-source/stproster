@@ -101,9 +101,13 @@ def save_shift(username, date_str, shift_info):
 def get_all_shifts(exclude_cancelled=False):
     """獲取所有班次 (管理員日曆用)"""
     try:
-        query = supabase.table("pt_shifts").select("*")
+        # 🚀 突破 Supabase 預設的 1000 筆限制！
+        # 加上 .limit(5000) 獲取更多資料，並用 order('id', desc=True) 確保優先載入最新資料
+        query = supabase.table("pt_shifts").select("*").limit(5000).order("id", desc=True)
+        
         if exclude_cancelled:
             query = query.neq("status", "Cancelled").neq("status", "Rejected")
+            
         res = query.execute()
         return res
     except Exception:
