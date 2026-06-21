@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """日曆工具函數模塊"""
 
+import json
 from datetime import datetime
 from typing import List, Dict
 
@@ -25,10 +26,19 @@ def count_shift_slots(day_data: List[dict]) -> Dict[str, Dict[str, int]]:
             continue
             
         role = row.get('role', 'PT').strip().upper()
-        slots = row.get('slots', [])
+        raw_slots = row.get('slots', [])
         
-        if not isinstance(slots, list):
-            slots = [slots] if slots else []
+        # 🚀 終極 Bug 修復：處理被字串化的 JSON 陣列 (例如: "[\"早班\", \"中班\"]")
+        if isinstance(raw_slots, str):
+            try:
+                slots = json.loads(raw_slots)
+            except json.JSONDecodeError:
+                # 兼容舊版純文字格式 (例如 "WORK: 早班")
+                slots = [raw_slots] if raw_slots else []
+        elif isinstance(raw_slots, list):
+            slots = raw_slots
+        else:
+            slots = []
             
         if status == 'Pending':
             counts['pending'] += 1
@@ -62,10 +72,18 @@ def get_day_staff_details(day_data: List[dict]) -> Dict[str, List[str]]:
             
         username = row.get('username', 'Unknown')
         role = row.get('role', 'PT').strip().upper()
-        slots = row.get('slots', [])
+        raw_slots = row.get('slots', [])
         
-        if not isinstance(slots, list):
-            slots = [slots] if slots else []
+        # 🚀 終極 Bug 修復：處理被字串化的 JSON 陣列
+        if isinstance(raw_slots, str):
+            try:
+                slots = json.loads(raw_slots)
+            except json.JSONDecodeError:
+                slots = [raw_slots] if raw_slots else []
+        elif isinstance(raw_slots, list):
+            slots = raw_slots
+        else:
+            slots = []
             
         shift_display = []
         for slot in slots:
