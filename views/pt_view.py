@@ -39,7 +39,7 @@ def pt_view(role):
         st.warning("⚠️ 請連接公司 WIFI 以進行打卡")
 
     # --- 功能分頁 ---
-    tab1, tab2, tab3 = st.tabs(["📅 預約上班", "📜 我的紀錄", "⚙️ 個人設定"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📅 預約上班", "📜 我的紀錄", "📝 審批狀態", "⚙️ 個人設定"])
     
     with tab1:
         st.subheader("📅 提交報更")
@@ -107,12 +107,61 @@ def pt_view(role):
             st.dataframe(display_df, use_container_width=True, hide_index=True)
         else:
             st.info("💡 尚無打卡紀錄")
-        
-        # 🚀 呼叫共用元件生成日曆下載按鈕
-        st.divider()
-        st.subheader("📅 日曆同步")
-        accepted = db.get_user_accepted_shifts(st.session_state.username)
-        render_ics_download_button(st.session_state.username, accepted)
 
     with tab3:
+        st.subheader("📝 報更審批狀態")
+        
+        # 🌟 已優化：字體放大 5px 並加粗的提示訊息
+        st.markdown(
+            "<div style='font-size: 19px; font-weight: bold; color: #555555; margin-bottom: 15px;'>"
+            "您可以在此查看近期的排班審批結果。若尚未批准，可自行取消。"
+            "</div>", 
+            unsafe_allow_html=True
+        )
+        
+        # 📅 移至此處的日曆同步功能：當夥伴有「已批准」的班次時，直接在此處提供下載按鈕
+        accepted = db.get_user_accepted_shifts(st.session_state.username)
+        if accepted:
+            render_ics_download_button(st.session_state.username, accepted)
+            st.divider()
+        
+        applications = db.get_user_shift_applications(st.session_state.username)
+        
+        if applications:
+            for app in applications:
+                shift_id = app.get("id")
+                date = app.get("shift_date")
+                slots = app.get("slots", [])
+                status = app.get("status", "Pending")
+                
+                with st.container():
+                    col1, col2, col3, col4 = st.columns([2, 3, 2, 3])
+                    
+                    col1.write(f"**{date}**")
+                    col2.write(", ".join(slots) if isinstance(slots, list) else slots)
+                    
+                    if status.lower() == 'pending':
+                        col3.markdown("⏳ **待審核**")
+                        with col4:
+                            if st.button("❌ 撤銷", key=f"cancel_{shift_id}", help="點擊取消此報更"):
+                                if db.delete_pt_shift(shift_id):
+                                    st.success("✅ 已成功撤銷報更")
+                                    time.sleep(1)
+                                    st.rerun()
+                                else:
+                                    st.error("撤銷失敗，請聯絡主管。")
+                    
+                    elif status.lower() == 'approved':
+                        col3.markdown("✅ **已批准**")
+                        col4.info(f"如需取消請報上 ID: **{shift_id}**")
+                        
+                    elif status.lower() == 'rejected':
+                        col3.markdown("❌ **已拒絕**")
+                        col4.write("-")
+                    
+                    st.divider()
+        else:
+            st.info("💡 目前沒有近期的報更紀錄。")
+
+    with tab4:
         change_password_ui()
