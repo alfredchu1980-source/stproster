@@ -130,6 +130,36 @@ def get_user_accepted_shifts(username):
     except Exception as e:
         return []
 
+def get_user_shift_applications(username: str) -> list:
+    """
+    獲取使用者近期的報更紀錄及其審批狀態 (支援 pt_view 取消報更介面)
+    """
+    try:
+        response = supabase.table("pt_shifts") \
+            .select("id, shift_date, slots, status") \
+            .eq("username", username.lower()) \
+            .order("shift_date", desc=False) \
+            .execute()
+        return response.data if response.data else []
+    except Exception as e:
+        print(f"Error fetching shift applications: {e}")
+        return []
+
+def delete_pt_shift(shift_id: int) -> bool:
+    """
+    刪除指定的報更紀錄 (強制限制僅能刪除 Pending 狀態，防止已核准班次被誤刪)
+    """
+    try:
+        response = supabase.table("pt_shifts") \
+            .delete() \
+            .eq("id", shift_id) \
+            .eq("status", "Pending") \
+            .execute()
+        return len(response.data) > 0
+    except Exception as e:
+        print(f"Error deleting shift {shift_id}: {e}")
+        return False
+
 
 # ==========================================
 # 4. 考勤與打卡紀錄
