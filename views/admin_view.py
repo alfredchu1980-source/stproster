@@ -31,11 +31,32 @@ def admin_view():
         raw_df['shift_date'] = raw_df['shift_date_dt'].dt.strftime('%Y-%m-%d')
         raw_df['year_month'] = raw_df['shift_date_dt'].dt.strftime('%Y-%m')
         
+        # 1. 確保先進行 role 映射 (這是後續判斷的基礎)
         if users_data:
             u_map = {u['username'].strip().lower(): u['role'] for u in users_data}
             raw_df['role'] = raw_df['username'].str.strip().str.lower().map(u_map).fillna('PT')
         else:
             raw_df['role'] = 'PT'
+            
+        # 🌟 2. 新增邏輯：僅針對 PT 將時段 (slots) 附加到 username 後方
+        if 'slots' in raw_df.columns:
+            def format_slots(slots_data):
+                if isinstance(slots_data, list):
+                    return "/".join(slots_data)
+                elif isinstance(slots_data, str):
+                    return slots_data
+                return ""
+            
+            raw_df['slots_str'] = raw_df['slots'].apply(format_slots)
+            
+            # 建立條件函數：只有身分為 PT 且有時段資料時，才修改名字
+            def append_slot_to_pt(row):
+                if row['role'] == 'PT' and row['slots_str']:
+                    return f"{row['username']} ({row['slots_str']})"
+                return row['username']
+            
+            raw_df['username'] = raw_df.apply(append_slot_to_pt, axis=1)
+            
     else:
         raw_df = pd.DataFrame()
 
