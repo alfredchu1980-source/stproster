@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+import pandas as pd
 import database as db
+import json  # 必須引入 json 來解析 Supabase 的字串化陣列
 
 def render_approval_panel(df_filtered, session_key):
     if df_filtered is None or df_filtered.empty: return
@@ -29,23 +31,36 @@ def render_day_approval_buttons(date_str, df_filtered, session_key):
     if not pending.empty:
         with st.expander(f"⏳ 審批({len(pending)})"):
             for _, row in pending.iterrows():
-                # 🌟 新增邏輯：提取時段資料並進行格式化
-                raw_slots = row.get('slots', [])
-                if isinstance(raw_slots, list):
-                    slots_str = "/".join(raw_slots)
-                elif isinstance(raw_slots, str):
-                    slots_str = raw_slots
-                else:
-                    slots_str = ""
                 
-                # 🌟 新增邏輯：將使用者名稱與時段組合 (例如: "tommy (早/中)")
+                # 🌟 終極解析邏輯：與 calendar_utils.py 保持一致
+                raw_slots = row.get('slots', [])
+                
+                # 防禦 Pandas 產生的 NaN 值
+                if pd.isna(raw_slots):
+                    raw_slots = []
+                
+                if isinstance(raw_slots, str):
+                    try:
+                        # 嘗試解析字串化的 JSON
+                        slots_list = json.loads(raw_slots)
+                    except json.JSONDecodeError:
+                        # 兼容舊版純文字格式
+                        slots_list = [raw_slots] if raw_slots else []
+                elif isinstance(raw_slots, list):
+                    slots_list = raw_slots
+                else:
+                    slots_list = []
+                
+                # 將陣列轉為以斜線分隔的字串
+                slots_str = "/".join(slots_list)
+                
+                # 組合最終顯示名稱
                 display_name = f"{row['username']} ({slots_str})" if slots_str else row['username']
                 
                 # 更新前端顯示字串
                 st.write(display_name)
                 
                 c1, c2 = st.columns(2)
-                # 底層依然使用 row['id']，確保 Supabase 寫入正確
                 if c1.button("✅", key=f"y_{row['id']}"): 
                     db.update_shift_status(row['id'], "Approved")
                     st.rerun()
