@@ -36,8 +36,8 @@ def render_day_approval_buttons(date_str, df_filtered, session_key):
                 raw_slots = row.get('slots', [])
                 
                 # 防禦 Pandas 產生的 NaN 值
-                if pd.isna(raw_slots):
-                    raw_slots = []
+                if isinstance(raw_slots, float) and pd.isna(raw_slots):
+                raw_slots = []
                 
                 if isinstance(raw_slots, str):
                     try:
