@@ -29,8 +29,23 @@ def render_day_approval_buttons(date_str, df_filtered, session_key):
     if not pending.empty:
         with st.expander(f"⏳ 審批({len(pending)})"):
             for _, row in pending.iterrows():
-                st.write(f"{row['username']}")
+                # 🌟 新增邏輯：提取時段資料並進行格式化
+                raw_slots = row.get('slots', [])
+                if isinstance(raw_slots, list):
+                    slots_str = "/".join(raw_slots)
+                elif isinstance(raw_slots, str):
+                    slots_str = raw_slots
+                else:
+                    slots_str = ""
+                
+                # 🌟 新增邏輯：將使用者名稱與時段組合 (例如: "tommy (早/中)")
+                display_name = f"{row['username']} ({slots_str})" if slots_str else row['username']
+                
+                # 更新前端顯示字串
+                st.write(display_name)
+                
                 c1, c2 = st.columns(2)
+                # 底層依然使用 row['id']，確保 Supabase 寫入正確
                 if c1.button("✅", key=f"y_{row['id']}"): 
                     db.update_shift_status(row['id'], "Approved")
                     st.rerun()
