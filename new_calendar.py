@@ -2,23 +2,35 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 import database as db
-import plotly.express as px
 
-# 核心預算防線
-DAILY_BUDGET_LIMIT = 6000
-DEFAULT_HOURLY_RATE = 60.0
+# 匯入我們剛剛解耦的核心引擎
+from utils.budget_calc import (
+    DAILY_BUDGET_LIMIT, 
+    DEFAULT_HOURLY_RATE, 
+    calculate_financial_metrics, 
+    aggregate_daily_shifts
+)
+import components.charts as charts
 
-def render_commander_dashboard(raw_df):
+def render_commander_dashboard(raw_df: pd.DataFrame):
     """
-    戰術排班控制台的介面渲染模組。
-    接收由 admin_view.py 傳入的已清洗資料 (raw_df) 進行渲染。
+    戰術排班控制台的主視圖 (View/Controller)。
+    專注於 UI 佈局與元件呼叫，商業邏輯已抽離至 utils 與 components。
     """
     if raw_df.empty:
         df_shifts = pd.DataFrame()
     else:
         df_shifts = raw_df.copy()
 
-    # 🌟 顯眼的橫向指揮官視野過濾器 (已加回自訂區間功能)
+    today = datetime.now().date()
+    
+    # 確保日期欄位為 datetime 格式
+    if not df_shifts.empty and 'shift_date_dt' in df_shifts.columns:
+        df_shifts['shift_date_dt'] = pd.to_datetime(df_shifts['shift_date_dt'])
+
+    # ==========================================
+    # 🌟 橫向指揮官視野過濾器 (UI 控制)
+    # ==========================================
     view_mode = st.radio(
         "📅 戰略視野切換", 
         ["全部資料 (All)", "本月 (This Month)", "本週 (This Week)", "今日 (Today)", "自訂區間 (Custom Range)"],
@@ -26,152 +38,140 @@ def render_commander_dashboard(raw_df):
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
-    current_month_total_cost = 0
-    total_pending_cost = 0
-    today = datetime.now().date()
-    
-    if not df_shifts.empty:
-        # 1. 永遠計算本月累計總支出 (不受過濾器影響，確保數據精確)
-        df_this_month = df_shifts[(df_shifts['shift_date_dt'].dt.month == today.month) & (df_shifts['shift_date_dt'].dt.year == today.year)]
-        df_this_month_approved = df_this_month[df_this_month['status_normalized'] == 'approved']
-        current_month_total_cost = df_this_month_approved['shift_cost'].sum() if 'shift_cost' in df_this_month_approved.columns else 0
+    # 預設起訖日期
+    start_date = today
+    end_date = today
 
-        # 2. 依照所選視野過濾當前顯示資料
+    # 依照所選視野決定 start_date 與 end_date
+    if not df_shifts.empty:
         if view_mode == "本月 (This Month)":
-            df_shifts = df_shifts[(df_shifts['shift_date_dt'].dt.month == today.month) & (df_shifts['shift_date_dt'].dt.year == today.year)]
+            start_date = datetime(today.year, today.month, 1).date()
+            # 這裡簡單抓個下個月初減一天的邏輯，或直接依賴 budget_calc 的月份天數
+            from calendar import monthrange
+            _, days = monthrange(today.year, today.month)
+            end_date = datetime(today.year, today.month, days).date()
         elif view_mode == "本週 (This Week)":
-            start_of_week = today - timedelta(days=today.weekday())
-            end_of_week = start_of_week + timedelta(days=6)
-            df_shifts = df_shifts[(df_shifts['shift_date_dt'].dt.date >= start_of_week) & (df_shifts['shift_date_dt'].dt.date <= end_of_week)]
+            start_date = today - timedelta(days=today.weekday())
+            end_date = start_date + timedelta(days=6)
         elif view_mode == "今日 (Today)":
-            df_shifts = df_shifts[df_shifts['shift_date_dt'].dt.date == today]
+            start_date = today
+            end_date = today
         elif view_mode == "自訂區間 (Custom Range)":
-            # 展開自訂日期選擇器
             col_date1, col_date2 = st.columns(2)
             with col_date1:
-                date_range = st.date_input(
-                    "選擇起訖日期", 
-                    value=(today, today + timedelta(days=7)),
-                    key="custom_date_range"
-                )
-            
-            # 確保使用者選了兩個日期（起與訖）才進行過濾
+                date_range = st.date_input("選擇起訖日期", value=(today, today + timedelta(days=7)), key="custom_date_range")
             if isinstance(date_range, tuple) and len(date_range) == 2:
                 start_date, end_date = date_range
-                df_shifts = df_shifts[(df_shifts['shift_date_dt'].dt.date >= start_date) & (df_shifts['shift_date_dt'].dt.date <= end_date)]
             else:
                 st.warning("請選擇完整的起訖日期區間。")
+        elif view_mode == "全部資料 (All)":
+            if 'shift_date_dt' in df_shifts.columns:
+                start_date = df_shifts['shift_date_dt'].min().date()
+                end_date = df_shifts['shift_date_dt'].max().date()
 
-    # 聚合計算 (針對目前視野)
+    # 取得區間內的資料子集 (用於待審批清單與沙盤)
     if not df_shifts.empty:
-        df_approved = df_shifts[df_shifts['status_normalized'] == 'approved']
-        df_pending = df_shifts[df_shifts['status_normalized'] == 'pending']
-        
-        total_pending_cost = df_pending['shift_cost'].sum() if not df_pending.empty else 0
-
-        if not df_approved.empty:
-            # 三更班次細部拆解運算邏輯
-            def aggregate_shifts(x):
-                is_picker = x['role'].str.upper().isin(['PICKER', 'PT'])
-                is_packer = x['role'].str.upper() == 'PACKER'
-                
-                # 提取時段字串並轉小寫，以便進行多重比對
-                if 'slots_str' in x.columns:
-                    slots_series = x['slots_str'].astype(str).str.lower()
-                elif 'slots' in x.columns:
-                    slots_series = x['slots'].astype(str).str.lower()
-                else:
-                    slots_series = pd.Series([""] * len(x), index=x.index)
-                
-                # 透過關鍵字掃描區分班別
-                is_day = slots_series.str.contains('日|早|morning|am|09|10', regex=True)
-                is_mid = slots_series.str.contains('中|午|afternoon|pm|13|14', regex=True)
-                is_night = slots_series.str.contains('夜|晚|night|18|19', regex=True)
-                
-                return pd.Series({
-                    'picker_total': len(x[is_picker]),
-                    'picker_day': len(x[is_picker & is_day]),
-                    'picker_mid': len(x[is_picker & is_mid]),
-                    'picker_night': len(x[is_picker & is_night]),
-                    'picker_cost': x[is_picker]['shift_cost'].sum(),
-                    
-                    'packer_total': len(x[is_packer]),
-                    'packer_day': len(x[is_packer & is_day]),
-                    'packer_mid': len(x[is_packer & is_mid]),
-                    'packer_night': len(x[is_packer & is_night]),
-                    'packer_cost': x[is_packer]['shift_cost'].sum(),
-                    
-                    'daily_cost': x['shift_cost'].sum(),
-                    'date_for_sort': x['shift_date'].iloc[0] 
-                })
-
-            # 依照附帶星期的完整日期進行分組並套用拆解運算
-            calendar_summary = df_approved.groupby('shift_date_display').apply(aggregate_shifts).reset_index().sort_values(by='date_for_sort')
-        else:
-            calendar_summary = pd.DataFrame(columns=[
-                'shift_date_display', 'picker_total', 'picker_day', 'picker_mid', 'picker_night', 'picker_cost',
-                'packer_total', 'packer_day', 'packer_mid', 'packer_night', 'packer_cost', 'daily_cost'
-            ])
+        df_range = df_shifts[(df_shifts['shift_date_dt'].dt.date >= start_date) & 
+                             (df_shifts['shift_date_dt'].dt.date <= end_date)]
+        df_range_approved = df_range[df_range['status_normalized'] == 'approved']
+        df_range_pending = df_range[df_range['status_normalized'] == 'pending']
     else:
-        df_pending = pd.DataFrame()
-        calendar_summary = pd.DataFrame()
+        df_range_approved = pd.DataFrame()
+        df_range_pending = pd.DataFrame()
 
     # ==========================================
-    # Master 區塊：宏觀預算儀表板
+    # 呼叫底層引擎進行運算 (Data & Logic)
+    # ==========================================
+    # 1. 計算所有財務指標
+    metrics = calculate_financial_metrics(df_shifts, today, start_date, end_date)
+    
+    # 2. 進行每日兵種資料聚合
+    calendar_summary = aggregate_daily_shifts(df_range_approved)
+
+    # ==========================================
+    # Master 區塊：宏觀預算儀表板 (UI 渲染)
     # ==========================================
     st.subheader("💰 預算戰情室 (PT 預估成本)")
     col1, col2, col3 = st.columns(3)
-    col1.metric(label="本月累計 PT 總支出 (已核准)", value=f"${current_month_total_cost:,.0f}")
-    col2.metric(label=f"區間內待審批潛在支出", value=f"${total_pending_cost:,.0f}")
+    
+    monthly_limit = metrics.get('monthly_budget_limit', 0)
+    current_cost = metrics.get('current_month_cost', 0)
+    monthly_diff = monthly_limit - current_cost
+    
+    if monthly_diff >= 0:
+        delta_str = f"{monthly_diff:,.0f} (本月剩餘)"
+    else:
+        delta_str = f"{monthly_diff:,.0f} (本月已超支)"
+    
+    col1.metric(
+        label=f"本月累計支出 (上限 ${monthly_limit:,.0f})", 
+        value=f"${current_cost:,.0f}",
+        delta=delta_str,
+        delta_color="normal"
+    )
+    col2.metric(label="區間內待審批潛在支出", value=f"${metrics.get('total_pending_cost', 0):,.0f}")
     col3.metric(label="每日預算警戒線", value=f"${DAILY_BUDGET_LIMIT:,.0f}")
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ==========================================
-    # 📊 數據視覺化情報區 (Data Visualization)
+    # 📊 數據視覺化情報區 (Charts Components)
     # ==========================================
     if not calendar_summary.empty:
         st.subheader("📈 戰術視覺化分析")
         chart_col1, chart_col2 = st.columns(2)
         
         with chart_col1:
-            # 圖表 1: 兵種成本結構堆疊圖 (加入預算警戒線)
-            df_bar = calendar_summary[['shift_date_display', 'picker_cost', 'packer_cost']].copy()
-            df_bar = df_bar.rename(columns={'picker_cost': 'Picker 成本', 'packer_cost': 'Packer 成本'})
-            fig_cost = px.bar(
-                df_bar, 
-                x='shift_date_display', 
-                y=['Picker 成本', 'Packer 成本'], 
-                title="每日兵種成本結構與警戒線",
-                labels={'value': '預估成本 (HKD)', 'shift_date_display': '日期', 'variable': '兵種'},
-                color_discrete_map={'Picker 成本': '#66b3ff', 'Packer 成本': '#99ff99'}
-            )
-            # 畫上紅色的 6000 預算天花板
-            fig_cost.add_hline(y=DAILY_BUDGET_LIMIT, line_dash="dash", line_color="#ff4444", annotation_text="每日上限")
-            fig_cost.update_layout(margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-            st.plotly_chart(fig_cost, use_container_width=True)
+            fig_cost = charts.create_cost_bar_chart(calendar_summary, DAILY_BUDGET_LIMIT)
+            if fig_cost:
+                st.plotly_chart(fig_cost, use_container_width=True)
             
         with chart_col2:
-            # 圖表 2: 每日時段兵力部署熱力圖
-            heatmap_data = calendar_summary[['shift_date_display', 'picker_day', 'picker_mid', 'picker_night', 'packer_day', 'packer_mid', 'packer_night']].copy()
-            heatmap_data['早班'] = heatmap_data['picker_day'] + heatmap_data['packer_day']
-            heatmap_data['中班'] = heatmap_data['picker_mid'] + heatmap_data['packer_mid']
-            heatmap_data['夜班'] = heatmap_data['picker_night'] + heatmap_data['packer_night']
-            
-            df_heat = heatmap_data.melt(id_vars=['shift_date_display'], value_vars=['夜班', '中班', '早班'], var_name='時段', value_name='總人次')
-            
-            fig_heat = px.density_heatmap(
-                df_heat, 
-                x='shift_date_display', 
-                y='時段', 
-                z='總人次', 
-                title="每日時段兵力部署熱度",
-                color_continuous_scale="Oranges",
-                labels={'shift_date_display': '日期', '時段': '排班時段', '總人次': '投入人次'}
-            )
-            fig_heat.update_layout(margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-            st.plotly_chart(fig_heat, use_container_width=True)
+            fig_heat = charts.create_shift_heatmap(calendar_summary)
+            if fig_heat:
+                st.plotly_chart(fig_heat, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
+
+    # ==========================================
+    # 🔵 所選區間財務數據化戰報 (Data Summary)
+    # ==========================================
+    range_budget = metrics.get('range_budget_limit', 0)
+    range_cost = metrics.get('range_approved_cost', 0)
+    burn_ratio = metrics.get('burn_ratio', 0)
+    range_remaining = metrics.get('range_remaining', 0)
+    
+    st.markdown(
+        f"""
+        <div style="background-color: #1e293b; border: 1px solid #3b82f6; border-radius: 10px; padding: 20px; margin-bottom: 25px;">
+            <h4 style="margin-top: 0px; color: #60a5fa; border-bottom: 1px solid #334155; padding-bottom: 8px;">
+                📋 所選區間財務數據戰報 ({start_date.strftime('%Y/%m/%d')} ~ {end_date.strftime('%Y/%m/%d')})
+            </h4>
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px; margin-top: 15px;">
+                <div style="flex: 1; min-width: 150px;">
+                    <div style="color: #94a3b8; font-size: 14px;">區間涵蓋天數</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #f8fafc;">{metrics.get('range_days', 0)} 天</div>
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <div style="color: #94a3b8; font-size: 14px;">區間總預算 (天數 × ${DAILY_BUDGET_LIMIT:,})</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #f8fafc;">${range_budget:,.0f}</div>
+                </div>
+                <div style="flex: 1; min-width: 220px;">
+                    <div style="color: #94a3b8; font-size: 14px;">區間總支出 / 總預算 (消耗率)</div>
+                    <div style="font-size: 24px; font-weight: bold; color: {'#ef4444' if burn_ratio > 100 else '#38bdf8'};">
+                        ${range_cost:,.0f} / ${range_budget:,.0f} <span style="font-size: 16px;">({burn_ratio:.1f}%)</span>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <div style="color: #94a3b8; font-size: 14px;">區間剩餘額度</div>
+                    <div style="font-size: 24px; font-weight: bold; color: {'#ef4444' if range_remaining < 0 else '#4ade80'};">
+                        ${range_remaining:,.0f}
+                    </div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     # ==========================================
     # Master 區塊：戰術沙盤
@@ -182,12 +182,8 @@ def render_commander_dashboard(raw_df):
         for i, row in calendar_summary.iterrows():
             col_idx = i % 4
             with cols[col_idx]:
-                if not df_pending.empty:
-                    pending_count = len(df_pending[df_pending['shift_date_display'] == row['shift_date_display']])
-                else:
-                    pending_count = 0
+                pending_count = len(df_range_pending[df_range_pending['shift_date_display'] == row['shift_date_display']]) if not df_range_pending.empty else 0
                 
-                # 🌟 預算超標的專屬警戒邏輯 (卡片邊框與文字同步變紅)
                 is_over_budget = row['daily_cost'] > DAILY_BUDGET_LIMIT
                 card_border = "1px solid #ff4444" if is_over_budget else "1px solid #555"
                 cost_color = "#ff4444" if is_over_budget else "#99ff99"
@@ -195,7 +191,6 @@ def render_commander_dashboard(raw_df):
                 
                 cost_display = f"<span style='color: {cost_color}; font-weight: bold;'>{cost_icon} 預估: ${row['daily_cost']:,.0f}</span>"
                 
-                # HTML 標籤絕對靠左，防堵 Markdown 解析錯誤，並套用 18px 字體
                 card_html = f"""
 <div style="border: {card_border}; border-radius: 8px; padding: 15px; background-color: #1e1e1e; margin-bottom: 20px;">
 <h4 style="margin-top: 0px; color: #fff;">{row['shift_date_display']}</h4>
@@ -223,7 +218,7 @@ def render_commander_dashboard(raw_df):
     # ==========================================
     st.subheader("📋 待審批清單 (微觀調度)")
 
-    if not df_pending.empty:
+    if not df_range_pending.empty:
         header_cols = st.columns([2, 2, 2, 2, 3])
         header_cols[0].markdown("**日期**")
         header_cols[1].markdown("**申請人**")
@@ -232,7 +227,7 @@ def render_commander_dashboard(raw_df):
         header_cols[4].markdown("**指揮官操作**")
         st.markdown("<hr style='margin: 0; padding: 0;'>", unsafe_allow_html=True)
 
-        for index, row in df_pending.iterrows():
+        for index, row in df_range_pending.iterrows():
             row_cols = st.columns([2, 2, 2, 2, 3])
             row_cols[0].write(row.get("shift_date_display", "N/A"))
             row_cols[1].write(row.get("original_username", "N/A")) 
