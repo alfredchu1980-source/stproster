@@ -224,3 +224,25 @@ def update_ft_leave_status(leave_id, new_status):
         supabase.table("ft_leaves").update({"status": new_status}).eq("id", leave_id).execute()
     except Exception:
         pass
+
+def submit_leave_application(username: str, leave_type: str, leave_date: str) -> bool:
+    """
+    將全職請假申請寫入 ft_leaves 資料表
+    """
+    try:
+        data = {
+            "username": username.lower(),  # 確保帳號格式統一
+            "leave_type": leave_type,      # 例如 "RD", "AL"
+            "leave_date": leave_date,      # YYYY-MM-DD 格式
+            "leave_days": 1,               # 預設請假天數為 1 天
+            "status": "Pending"            # 預設狀態為待審批
+        }
+        res = supabase.table("ft_leaves").insert(data).execute()
+        
+        # 清除 Streamlit 快取，確保管理員介面與個人紀錄能立刻抓到最新資料
+        st.cache_data.clear()
+        
+        return True if res.data else False
+    except Exception as e:
+        st.error(f"提交請假申請失敗: {e}")
+        return False
