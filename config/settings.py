@@ -29,7 +29,8 @@ FT_LEAVE_TYPES = {
     "AL": "年假 (Annual Leave)",
     "SL": "病假 (Sick Leave)",
     "CL": "補假 (Compensatory Leave)",
-    "ML": "婚/產假 (Marriage/Maternity Leave)"
+    "ML": "婚/產假 (Marriage/Maternity Leave)",
+    "RD": "例假 (Rest Day)"
 }
 
 # 香港 2026 公眾假期表
