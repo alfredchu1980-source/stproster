@@ -45,9 +45,13 @@ def ft_view():
                 options=list(FT_LEAVE_TYPES.keys()),
                 format_func=lambda x: FT_LEAVE_TYPES.get(x)
             )
-            st.date_input("請假日期")
+            leave_date = st.date_input("請假日期")
             if st.form_submit_button("提交"):
-                st.success("提交成功 (模擬)")
+                leave_date_str = leave_date.strftime('%Y-%m-%d')
+                if db.submit_leave_application(st.session_state.username, leave_type, leave_date_str):
+                    st.success(f"✅ 已成功提交 {leave_date_str} 的 {FT_LEAVE_TYPES.get(leave_type)} 申請！")
+                else:
+                    st.error("❌ 提交失敗，請聯絡系統管理員。")
                 
     with tab2:
         st.write("2026 年假期統計加載中...")
