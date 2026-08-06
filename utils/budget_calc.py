@@ -27,6 +27,7 @@ def get_range_budget(start_date: datetime.date, end_date: datetime.date) -> tupl
 def aggregate_daily_shifts(df_approved: pd.DataFrame) -> pd.DataFrame:
     """
     將已核准的排班資料依照日期與兵種、時段進行聚合計算。
+    (已完美適配 "早班 (09-13)" 等單選或多選組合格式)
     """
     if df_approved.empty:
         return pd.DataFrame()
@@ -43,10 +44,31 @@ def aggregate_daily_shifts(df_approved: pd.DataFrame) -> pd.DataFrame:
         else:
             slots_series = pd.Series([""] * len(x), index=x.index)
         
-        # 時段過濾正則表達式
-        is_day = slots_series.str.contains('日|早|morning|am|09|10', regex=True)
-        is_mid = slots_series.str.contains('中|午|afternoon|pm|13|14', regex=True)
-        is_night = slots_series.str.contains('夜|晚|night|18|19', regex=True)
+        # ==========================================
+        # 1. 標籤直擊：直接捕捉中文或英文關鍵字
+        # ==========================================
+        has_day_label = slots_series.str.contains('日|早|morning|am', regex=True)
+        has_mid_label = slots_series.str.contains('中|午|afternoon|pm', regex=True)
+        has_night_label = slots_series.str.contains('夜|晚|night', regex=True)
+        
+        # ==========================================
+        # 2. 數字防呆鎖定：只捕捉「橫槓前面的數字」(上班時間)
+        # 正則解釋：(?<!\d) 確保前面不是數字，(?=-) 確保後面緊跟著一個減號
+        # 例如 "14-18"，只有 14 會被抓到，18 會被安全忽略
+        # ==========================================
+        # 早班：06:00 ~ 11:59 開始 (捕捉 06~11)
+        has_day_num = slots_series.str.contains(r'(?<!\d)(0[6-9]|1[0-1])(?=-)', regex=True)
+        # 中班：12:00 ~ 16:59 開始 (捕捉 12~16)
+        has_mid_num = slots_series.str.contains(r'(?<!\d)(1[2-6])(?=-)', regex=True)
+        # 夜班：17:00 ~ 23:59 開始 (捕捉 17~23)
+        has_night_num = slots_series.str.contains(r'(?<!\d)(1[7-9]|2[0-3])(?=-)', regex=True)
+        
+        # ==========================================
+        # 3. 綜合判定：符合標籤或符合起始數字，即視為該班別
+        # ==========================================
+        is_day = has_day_label | has_day_num
+        is_mid = has_mid_label | has_mid_num
+        is_night = has_night_label | has_night_num
         
         return pd.Series({
             'picker_total': len(x[is_picker]),
