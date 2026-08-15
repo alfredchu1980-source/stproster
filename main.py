@@ -49,8 +49,8 @@ def main():
         st.markdown(get_sidebar_footer(), unsafe_allow_html=True)
 
     # 6. 核心視圖分流 (View Routing)
-    if role == "ADMIN":
-        admin_view.admin_view()
+    if role in ["ADMIN", "SUPER ADMIN"]:
+        admin_view.admin_view(role=role)
     elif role in ["PT", "PICKER", "PACKER"]:
         pt_view.pt_view(role=role) 
     elif role == "FT":
